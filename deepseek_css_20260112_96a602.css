@@ -1,0 +1,25 @@
+/* Mobile: 320px - 767px */
+@media (max-width: 767px) {
+  .sidebar { left: -100%; }
+  .bottom-nav { display: flex; }
+  .top-nav { display: flex; }
+}
+
+/* Tablet: 768px - 1023px */
+@media (min-width: 768px) {
+  .sidebar { left: 0; width: 280px; }
+  .bottom-nav { display: none; }
+  .top-nav { display: none; }
+  .main-content { margin-left: 280px; }
+}
+
+/* Desktop: 1024px - 1439px */
+@media (min-width: 1024px) {
+  .main-content { padding: 2.5rem 3rem; }
+  .page-title { font-size: 2.5rem; }
+}
+
+/* Large Desktop: 1440px+ */
+@media (min-width: 1440px) {
+  .main-content { max-width: 1400px; }
+}
