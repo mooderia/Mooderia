@@ -50,6 +50,62 @@
             overflow-x: hidden;
         }
 
+        body.dark-mode {
+            background-color: var(--gray-900);
+            color: var(--gray-100);
+        }
+
+        body.dark-mode .card,
+        body.dark-mode .top-nav,
+        body.dark-mode .sidebar,
+        body.dark-mode .bottom-nav,
+        body.dark-mode .chat-container,
+        body.dark-mode .chat-header,
+        body.dark-mode .chat-input-area,
+        body.dark-mode .modal-content,
+        body.dark-mode .auth-card,
+        body.dark-mode .select-box,
+        body.dark-mode .birthday-input,
+        body.dark-mode .comment-input,
+        body.dark-mode .post-input,
+        body.dark-mode .oracle-question,
+        body.dark-mode .form-control,
+        body.dark-mode .chat-input {
+            background-color: var(--gray-800);
+            color: var(--gray-100);
+            border-color: var(--gray-700);
+        }
+
+        body.dark-mode .citizen-item,
+        body.dark-mode .setting-item,
+        body.dark-mode .contribution-item,
+        body.dark-mode .post-card,
+        body.dark-mode .horoscope-card,
+        body.dark-mode .oracle-answer,
+        body.dark-mode .compatibility-result,
+        body.dark-mode .comment {
+            background-color: var(--gray-800);
+            color: var(--gray-100);
+        }
+
+        body.dark-mode .page-subtitle,
+        body.dark-mode .quote-author,
+        body.dark-mode .comment-time,
+        body.dark-mode .post-time,
+        body.dark-mode .message-time,
+        body.dark-mode .citizen-status {
+            color: var(--gray-400);
+        }
+
+        body.dark-mode .message-received {
+            background-color: var(--gray-700);
+            color: var(--gray-100);
+        }
+
+        body.dark-mode .chart-label {
+            color: var(--gray-400);
+        }
+
         /* Mobile First Layout */
         .app-container {
             min-height: 100vh;
@@ -113,6 +169,8 @@
             color: white;
             font-weight: 800;
             font-size: 1rem;
+            background-size: cover;
+            background-position: center;
         }
 
         /* Sidebar - Hidden on Mobile by default */
@@ -179,6 +237,7 @@
 
         .nav-item {
             margin-bottom: 0.5rem;
+            position: relative;
         }
 
         .nav-link {
@@ -190,6 +249,7 @@
             color: var(--gray-700);
             font-weight: 600;
             transition: all 0.2s ease;
+            position: relative;
         }
 
         .nav-link:hover, .nav-link.active {
@@ -203,6 +263,22 @@
             font-size: 1.25rem;
             width: 24px;
             text-align: center;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background-color: var(--accent-red);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
         }
 
         .user-card {
@@ -227,6 +303,8 @@
             margin-right: 1rem;
             border: 3px solid white;
             box-shadow: var(--shadow);
+            background-size: cover;
+            background-position: center;
         }
 
         .user-info h4 {
@@ -269,6 +347,7 @@
             transition: all 0.2s ease;
             border-radius: var(--radius-sm);
             margin: 0 0.25rem;
+            position: relative;
         }
 
         .nav-button.active {
@@ -285,6 +364,14 @@
             font-size: 0.75rem;
             font-weight: 700;
             text-align: center;
+        }
+
+        .nav-button .notification-badge {
+            top: -5px;
+            right: 0;
+            width: 18px;
+            height: 18px;
+            font-size: 0.6rem;
         }
 
         /* Main Content */
@@ -588,6 +675,8 @@
             font-size: 1rem;
             margin-right: 0.75rem;
             flex-shrink: 0;
+            background-size: cover;
+            background-position: center;
         }
 
         .post-user-info {
@@ -673,18 +762,18 @@
             border-top: 1px solid var(--gray-200);
         }
 
-        .comment-input-group {
+        .comment-input-area {
             display: flex;
             gap: 0.5rem;
-            margin-bottom: 1rem;
+            margin-top: 0.5rem;
         }
 
         .comment-input {
             flex: 1;
-            padding: 0.75rem;
-            border: 2px solid var(--gray-200);
+            padding: 0.5rem;
+            border: 1px solid var(--gray-300);
             border-radius: var(--radius);
-            font-size: 0.875rem;
+            font-size: 0.9rem;
         }
 
         .comments-list {
@@ -718,6 +807,22 @@
             color: var(--gray-500);
         }
 
+        .reply-btn {
+            background: none;
+            border: none;
+            color: var(--primary-purple);
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+        }
+
+        .replies {
+            margin-left: 1rem;
+            margin-top: 0.5rem;
+            padding-left: 1rem;
+            border-left: 2px solid var(--gray-200);
+        }
+
         /* Teller, Quiz, Meditation */
         .oracle-question {
             width: 100%;
@@ -736,6 +841,14 @@
             border-left: 4px solid var(--primary-purple);
             display: none;
             font-size: 0.95rem;
+        }
+
+        .teller-response-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
         }
 
         .quiz-options {
@@ -764,34 +877,108 @@
             border-color: var(--primary-purple);
         }
 
-        .meditation-timer {
+        /* Mood Pet */
+        .mood-pet-container {
             text-align: center;
-            font-size: 3rem;
-            font-weight: 900;
-            color: var(--primary-purple);
-            margin: 1.5rem 0;
+            padding: 1rem;
         }
 
-        .meditation-controls {
+        .mood-pet {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .pet-needs {
             display: flex;
-            justify-content: center;
-            gap: 0.75rem;
-            flex-wrap: wrap;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1.5rem;
         }
 
-        .btn-success {
-            background-color: var(--accent-green);
-            color: white;
+        .pet-need {
+            background-color: var(--gray-100);
+            border-radius: var(--radius);
+            padding: 1rem;
+            position: relative;
         }
 
-        .btn-warning {
-            background-color: var(--accent-orange);
-            color: white;
+        .need-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
         }
 
-        .btn-light {
-            background-color: var(--gray-200);
+        .need-label {
+            font-weight: 700;
             color: var(--gray-700);
+        }
+
+        .need-value {
+            font-weight: 800;
+            color: var(--primary-purple);
+        }
+
+        .need-bar {
+            height: 20px;
+            background-color: var(--gray-300);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .need-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .need-hunger .need-fill {
+            background-color: var(--accent-red);
+        }
+
+        .need-thirst .need-fill {
+            background-color: var(--secondary-blue);
+        }
+
+        .need-energy .need-fill {
+            background-color: var(--accent-orange);
+        }
+
+        .pet-actions {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .pet-action {
+            padding: 0.5rem;
+            border: none;
+            border-radius: var(--radius);
+            background-color: var(--primary-purple);
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.8rem;
+        }
+
+        .pet-action:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .pet-action:nth-child(1) {
+            background-color: var(--accent-red);
+        }
+
+        .pet-action:nth-child(2) {
+            background-color: var(--secondary-blue);
+        }
+
+        .pet-action:nth-child(3) {
+            background-color: var(--accent-orange);
         }
 
         /* Zodiac Features */
@@ -800,6 +987,18 @@
             flex-direction: column;
             gap: 0.75rem;
             margin-bottom: 1.5rem;
+        }
+
+        .select-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .select-group label {
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: 0.9rem;
         }
 
         .birthday-input {
@@ -1051,6 +1250,10 @@
             border: 4px solid white;
             box-shadow: var(--shadow-lg);
             margin-top: -4rem;
+            background-size: cover;
+            background-position: center;
+            cursor: pointer;
+            position: relative;
         }
 
         .profile-info {
@@ -1493,6 +1696,10 @@
                 display: flex;
                 flex-direction: column;
             }
+
+            .pet-needs {
+                flex-direction: row;
+            }
         }
 
         @media (min-width: 1024px) {
@@ -1543,18 +1750,56 @@
             }
         }
 
-        /* Dark mode switch styling */
-        .theme-switch {
-            position: fixed;
-            top: 70px;
-            right: 20px;
-            z-index: 1000;
+        /* Animation */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
 
-        .theme-switch-mobile {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes modalPop {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Quiz Fixes */
+        #quizTab .quiz-option.selected {
+            background-color: var(--primary-purple);
+            color: white;
+        }
+
+        .meditation-timer {
+            text-align: center;
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--primary-purple);
+            margin: 1.5rem 0;
+        }
+
+        .meditation-controls {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-success {
+            background-color: var(--accent-green);
+            color: white;
+        }
+
+        .btn-warning {
+            background-color: var(--accent-orange);
+            color: white;
+        }
+
+        .btn-light {
+            background-color: var(--gray-200);
+            color: var(--gray-700);
         }
     </style>
 </head>
@@ -1836,7 +2081,7 @@
                     <button class="tab active" data-tab="express">Express</button>
                     <button class="tab" data-tab="teller">Teller</button>
                     <button class="tab" data-tab="quiz">Quiz</button>
-                    <button class="tab" data-tab="meditation">Meditation</button>
+                    <button class="tab" data-tab="pet">Mood Pet</button>
                 </div>
 
                 <!-- Express Tab -->
@@ -1856,7 +2101,7 @@
                 <div id="tellerTab" class="tab-content">
                     <div class="card">
                         <h3 class="card-title">The Mood Teller</h3>
-                        <p class="mb-2">Ask any question about your mood or feelings, and the Mood Teller will provide insight.</p>
+                        <p class="mb-2">Ask any question about your mood or feelings. You will be given response options: Yes, No, Maybe, I don't think so.</p>
                         <input type="text" class="oracle-question" id="tellerQuestion" placeholder="Ask your question...">
                         <button class="btn btn-primary btn-block" id="askTeller">
                             <i class="fas fa-crystal-ball"></i> Ask the Teller
@@ -1896,29 +2141,53 @@
                     </div>
                 </div>
 
-                <!-- Meditation Tab -->
-                <div id="meditationTab" class="tab-content">
-                    <div class="card text-center">
-                        <h3 class="card-title">Meditation Garden</h3>
-                        <p class="mb-2">Take a moment to breathe and center yourself. Words of wisdom from the City Hall.</p>
+                <!-- Mood Pet Tab -->
+                <div id="petTab" class="tab-content">
+                    <div class="card">
+                        <h3 class="card-title">Mood Pet</h3>
+                        <p class="mb-2">Take care of your mood pet! Keep it happy by filling its needs.</p>
                         
-                        <div class="meditation-timer" id="meditationTimer">05:00</div>
-                        
-                        <div class="meditation-controls">
-                            <button class="btn btn-success" id="startMeditation">
-                                <i class="fas fa-play"></i> Start
-                            </button>
-                            <button class="btn btn-warning hidden" id="pauseMeditation">
-                                <i class="fas fa-pause"></i> Pause
-                            </button>
-                            <button class="btn btn-light" id="resetMeditation">
-                                <i class="fas fa-redo"></i> Reset
-                            </button>
-                        </div>
-                        
-                        <div class="mt-3">
-                            <div id="wisdomText" style="font-style: italic; color: var(--gray-600); padding: 1rem;">
-                                "Peace comes from within. Do not seek it without."
+                        <div class="mood-pet-container">
+                            <div class="mood-pet" id="moodPetEmoji">😊</div>
+                            <div class="pet-needs">
+                                <div class="pet-need need-hunger">
+                                    <div class="need-header">
+                                        <span class="need-label">Hunger</span>
+                                        <span class="need-value" id="hungerValue">75%</span>
+                                    </div>
+                                    <div class="need-bar">
+                                        <div class="need-fill" id="hungerBar" style="width: 75%"></div>
+                                    </div>
+                                    <button class="pet-action feed-btn">
+                                        <i class="fas fa-utensils"></i> Feed
+                                    </button>
+                                </div>
+                                
+                                <div class="pet-need need-thirst">
+                                    <div class="need-header">
+                                        <span class="need-label">Thirst</span>
+                                        <span class="need-value" id="thirstValue">60%</span>
+                                    </div>
+                                    <div class="need-bar">
+                                        <div class="need-fill" id="thirstBar" style="width: 60%"></div>
+                                    </div>
+                                    <button class="pet-action water-btn">
+                                        <i class="fas fa-tint"></i> Water
+                                    </button>
+                                </div>
+                                
+                                <div class="pet-need need-energy">
+                                    <div class="need-header">
+                                        <span class="need-label">Energy</span>
+                                        <span class="need-value" id="energyValue">40%</span>
+                                    </div>
+                                    <div class="need-bar">
+                                        <div class="need-fill" id="energyBar" style="width: 40%"></div>
+                                    </div>
+                                    <button class="pet-action play-btn">
+                                        <i class="fas fa-gamepad"></i> Play
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1927,98 +2196,7 @@
 
             <!-- Zodiac Page -->
             <div id="zodiacPage" class="page hidden">
-                <div class="page-header">
-                    <h1 class="page-title">COSMIC OBSERVATORY</h1>
-                    <p class="page-subtitle">Explore the Stars and Their Secrets</p>
-                </div>
-
-                <div class="grid grid-2">
-                    <!-- Love Matcher -->
-                    <div class="card">
-                        <h3 class="card-title">Love Matcher</h3>
-                        <div class="birthday-inputs">
-                            <input type="date" class="birthday-input" id="birthday1">
-                            <input type="date" class="birthday-input" id="birthday2">
-                        </div>
-                        <button class="btn btn-primary btn-block" id="calculateLove">
-                            <i class="fas fa-heart"></i> Calculate Match
-                        </button>
-                        <div class="compatibility-result mt-2" id="compatibilityResult">
-                            <div class="compatibility-percent" id="matchPercentage">85%</div>
-                            <p id="matchDescription">Excellent compatibility! The stars align for this union.</p>
-                        </div>
-                    </div>
-
-                    <!-- Horoscope -->
-                    <div class="card">
-                        <h3 class="card-title">Daily Horoscope</h3>
-                        <div class="horoscope-card">
-                            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
-                                <div style="font-size: 2rem;">♉</div>
-                                <div>
-                                    <h4 style="font-weight: 800; color: var(--gray-800);">Taurus</h4>
-                                    <p style="color: var(--gray-500); font-size: 0.85rem;">Apr 20 - May 20</p>
-                                </div>
-                            </div>
-                            <p id="horoscopeText" style="line-height: 1.5;">
-                                Today brings opportunities for financial growth. Trust your instincts when making decisions.
-                            </p>
-                            <div class="mt-2 pt-2" style="border-top: 1px solid var(--gray-200);">
-                                <p style="color: var(--gray-500); font-size: 0.8rem;">
-                                    Prediction locked until: <span id="nextHoroscope">Tomorrow, 12:00 AM</span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Almanac -->
-                    <div class="card">
-                        <h3 class="card-title">Zodiac Almanac</h3>
-                        <select id="zodiacSelect" class="select-box">
-                            <option value="aries">♈ Aries (Mar 21 - Apr 19)</option>
-                            <option value="taurus">♉ Taurus (Apr 20 - May 20)</option>
-                            <option value="gemini">♊ Gemini (May 21 - Jun 20)</option>
-                            <option value="cancer">♋ Cancer (Jun 21 - Jul 22)</option>
-                            <option value="leo">♌ Leo (Jul 23 - Aug 22)</option>
-                            <option value="virgo">♍ Virgo (Aug 23 - Sep 22)</option>
-                            <option value="libra">♎ Libra (Sep 23 - Oct 22)</option>
-                            <option value="scorpio">♏ Scorpio (Oct 23 - Nov 21)</option>
-                            <option value="sagittarius">♐ Sagittarius (Nov 22 - Dec 21)</option>
-                            <option value="capricorn">♑ Capricorn (Dec 22 - Jan 19)</option>
-                            <option value="aquarius">♒ Aquarius (Jan 20 - Feb 18)</option>
-                            <option value="pisces">♓ Pisces (Feb 19 - Mar 20)</option>
-                        </select>
-                        <div id="zodiacInfo" style="padding: 1rem; background-color: var(--gray-50); border-radius: var(--radius);">
-                            <p style="margin-bottom: 0.5rem;"><strong>Element:</strong> <span id="zodiacElement">Earth</span></p>
-                            <p style="margin-bottom: 0.5rem;"><strong>Ruling Planet:</strong> <span id="zodiacPlanet">Venus</span></p>
-                            <p id="zodiacDescription" style="line-height: 1.5; font-size: 0.9rem;">
-                                Taurus is known for reliability, practicality, and a love for comfort and beauty.
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Lucky Day -->
-                    <div class="card">
-                        <h3 class="card-title">Lucky Day</h3>
-                        <div style="text-align: center;">
-                            <h4 style="color: var(--primary-purple); margin-bottom: 1rem;">Today's Predictions</h4>
-                            <div class="lucky-items">
-                                <div class="lucky-item">
-                                    <div class="lucky-color" id="luckyColorBox" style="background-color: #ffa602;"></div>
-                                    <div style="font-weight: 700; font-size: 0.9rem;">Lucky Color</div>
-                                    <div id="luckyColorName" style="color: var(--accent-orange); font-weight: 600;">Orange</div>
-                                </div>
-                                <div class="lucky-item">
-                                    <div class="lucky-number" id="luckyNumberDisplay">7</div>
-                                    <div style="font-weight: 700; font-size: 0.9rem;">Lucky Number</div>
-                                </div>
-                            </div>
-                            <button class="btn btn-primary mt-2" id="refreshLucky">
-                                <i class="fas fa-sync"></i> Get New Predictions
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <!-- Content will be dynamically loaded -->
             </div>
 
             <!-- Community Page -->
@@ -2029,7 +2207,7 @@
                 </div>
 
                 <div class="chat-container">
-                    <div class="chat-sidebar hidden" id="chatSidebar">
+                    <div class="chat-sidebar" id="chatSidebar">
                         <h3 style="color: var(--primary-purple); margin-bottom: 1rem;">Citizens Online</h3>
                         <div id="citizensList">
                             <!-- Citizens will be listed here -->
@@ -2039,17 +2217,21 @@
                         <div class="chat-header">
                             <div class="user-avatar" id="chatPartnerAvatar" style="width: 40px; height: 40px;">A</div>
                             <div>
-                                <div style="font-weight: 800; color: var(--gray-800);" id="chatPartnerName">Alex</div>
-                                <div style="color: var(--accent-green); font-size: 0.8rem;" id="chatPartnerStatus">Online</div>
+                                <div style="font-weight: 800; color: var(--gray-800);" id="chatPartnerName">Select a Citizen</div>
+                                <div style="color: var(--gray-500); font-size: 0.8rem;" id="chatPartnerStatus">Start a conversation</div>
                             </div>
                         </div>
                         <div class="chat-messages" id="chatMessages">
-                            <!-- Messages will appear here -->
+                            <div class="empty-state" style="padding: 2rem;">
+                                <i class="fas fa-comments"></i>
+                                <h3>Start a Conversation</h3>
+                                <p>Select a citizen from the list to begin chatting</p>
+                            </div>
                         </div>
                         <div class="chat-input-area">
                             <div class="chat-input-group">
-                                <input type="text" class="chat-input" id="messageInput" placeholder="Type your message...">
-                                <button class="btn btn-primary" id="sendMessage">
+                                <input type="text" class="chat-input" id="messageInput" placeholder="Select a citizen to chat..." disabled>
+                                <button class="btn btn-primary" id="sendMessage" disabled>
                                     <i class="fas fa-paper-plane"></i>
                                 </button>
                             </div>
@@ -2061,8 +2243,8 @@
             <!-- Profile Page -->
             <div id="profilePage" class="page hidden">
                 <div class="profile-header">
-                    <div class="profile-banner">
-                        <div class="profile-banner-text">MOODERIEN CITIZEN CITY</div>
+                    <div class="profile-banner" id="profileBanner">
+                        <div class="profile-banner-text">MOODERIA</div>
                     </div>
                     <div class="profile-card">
                         <div class="profile-avatar-large" id="profileAvatarLarge">T</div>
@@ -2199,26 +2381,7 @@
     <!-- Edit Profile Modal -->
     <div id="editProfileModal" class="modal-overlay hidden">
         <div class="modal-content">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                <h3 class="modal-title">Edit City ID</h3>
-                <button class="btn btn-light" id="closeEditModal" style="padding: 0.5rem 1rem;">×</button>
-            </div>
-            <div class="form-group" style="margin-bottom: 1rem;">
-                <label for="editDisplayName">Display Name</label>
-                <input type="text" id="editDisplayName" class="form-control" placeholder="Enter your name">
-            </div>
-            <div class="form-group" style="margin-bottom: 1rem;">
-                <label for="editUsername">Username</label>
-                <input type="text" id="editUsername" class="form-control" placeholder="@username">
-            </div>
-            <div class="form-group" style="margin-bottom: 1.5rem;">
-                <label for="editStatus">Citizen Status</label>
-                <input type="text" id="editStatus" class="form-control" placeholder="e.g., Creator, Influencer">
-            </div>
-            <div style="display: flex; gap: 0.75rem;">
-                <button class="btn btn-light" id="cancelEdit" style="flex: 1;">Cancel</button>
-                <button class="btn btn-primary" id="saveProfile" style="flex: 1;">Save Changes</button>
-            </div>
+            <!-- Content will be dynamically loaded -->
         </div>
     </div>
 
@@ -2250,6 +2413,14 @@
             currentPage: 'home',
             currentMoodTab: 'express',
             currentProfileTab: 'posts',
+            notifications: {
+                mood: {
+                    likes: 0,
+                    comments: 0,
+                    reposts: 0
+                },
+                community: 0
+            },
             quizState: {
                 currentQuestion: 0,
                 answers: [],
@@ -2310,10 +2481,11 @@
                     }
                 ]
             },
-            meditationTimer: {
-                interval: null,
-                timeLeft: 300,
-                isRunning: false
+            moodPet: {
+                hunger: 75,
+                thirst: 60,
+                energy: 40,
+                lastUpdate: Date.now()
             },
             zodiacData: {
                 signs: {
@@ -2331,18 +2503,32 @@
                     pisces: { element: "Water", planet: "Neptune", description: "Pisces are compassionate, artistic, and deeply intuitive." }
                 }
             },
-            tellerResponses: [
-                "The stars indicate a positive shift in your emotional landscape. Embrace the change.",
-                "Your current feelings are valid. Remember that emotions are temporary visitors.",
-                "Look within for answers. Your intuition is stronger than you think.",
-                "Practice self-compassion today. You deserve kindness from yourself.",
-                "The universe is aligning in your favor. Trust the process.",
-                "Your emotional energy is creating ripples. Make them positive ones.",
-                "Balance is key. Find harmony between your heart and mind.",
-                "Today is a good day to release what no longer serves you.",
-                "Your mood is a compass, not a destination. Let it guide you.",
-                "Peace comes from accepting what you cannot change."
-            ],
+            tellerResponses: {
+                yes: [
+                    "The stars say YES! Your intuition is guiding you correctly.",
+                    "Positive energy surrounds this. Go for it!",
+                    "Definitely YES! The universe is aligning in your favor.",
+                    "All signs point to YES. Trust the process."
+                ],
+                no: [
+                    "The energy suggests NO for now. Reconsider your approach.",
+                    "Not at this time. Patience will bring better opportunities.",
+                    "The answer is NO. Listen to your inner wisdom.",
+                    "Better to wait. The timing isn't right."
+                ],
+                maybe: [
+                    "Possibilities exist. The outcome depends on your actions.",
+                    "Maybe. The universe is waiting for your decision.",
+                    "Unclear. Focus on what you truly want.",
+                    "It could go either way. Your intention matters."
+                ],
+                'i dont think so': [
+                    "Your doubts have wisdom. Probably not the right path.",
+                    "Unlikely. Consider alternative approaches.",
+                    "The energy isn't supporting this idea.",
+                    "Better to explore other options."
+                ]
+            },
             dailyQuotes: [
                 { quote: "Your mood is not a cage, but a canvas. Paint it with colors of joy today.", author: "Mooderia Oracle" },
                 { quote: "Every emotion is valid. What matters is how you respond to it.", author: "City Hall Wisdom" },
@@ -2352,15 +2538,9 @@
                 { quote: "The key to emotional harmony is balance, not perfection.", author: "Metropolis Philosophy" },
                 { quote: "Your mood streak is not about perfection, but about persistence.", author: "Citizen Motivation" }
             ],
-            wisdomQuotes: [
-                "Peace comes from within. Do not seek it without.",
-                "Breathe in peace, exhale tension.",
-                "The present moment is the only moment where life exists.",
-                "Let go of what you cannot control.",
-                "Mindfulness is the path to emotional freedom.",
-                "Each breath is an opportunity for renewal.",
-                "In stillness, find your answers."
-            ]
+            citizenStatuses: ['Student', 'Teenager', 'Worker', 'Professional', 'Artist', 'Influencer', 'Creator'],
+            months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+            days: Array.from({length: 31}, (_, i) => i + 1)
         };
 
         // DOM Elements
@@ -2413,7 +2593,7 @@
                 express: document.getElementById('expressTab'),
                 teller: document.getElementById('tellerTab'),
                 quiz: document.getElementById('quizTab'),
-                meditation: document.getElementById('meditationTab')
+                pet: document.getElementById('petTab')
             },
             
             // Express Tab
@@ -2434,30 +2614,14 @@
             quizResultTitle: document.getElementById('quizResultTitle'),
             quizResultDescription: document.getElementById('quizResultDescription'),
             
-            // Meditation Tab
-            meditationTimer: document.getElementById('meditationTimer'),
-            startMeditation: document.getElementById('startMeditation'),
-            pauseMeditation: document.getElementById('pauseMeditation'),
-            resetMeditation: document.getElementById('resetMeditation'),
-            wisdomText: document.getElementById('wisdomText'),
-            
-            // Zodiac Page
-            birthday1: document.getElementById('birthday1'),
-            birthday2: document.getElementById('birthday2'),
-            calculateLove: document.getElementById('calculateLove'),
-            compatibilityResult: document.getElementById('compatibilityResult'),
-            matchPercentage: document.getElementById('matchPercentage'),
-            matchDescription: document.getElementById('matchDescription'),
-            horoscopeText: document.getElementById('horoscopeText'),
-            nextHoroscope: document.getElementById('nextHoroscope'),
-            zodiacSelect: document.getElementById('zodiacSelect'),
-            zodiacElement: document.getElementById('zodiacElement'),
-            zodiacPlanet: document.getElementById('zodiacPlanet'),
-            zodiacDescription: document.getElementById('zodiacDescription'),
-            luckyColorBox: document.getElementById('luckyColorBox'),
-            luckyColorName: document.getElementById('luckyColorName'),
-            luckyNumberDisplay: document.getElementById('luckyNumberDisplay'),
-            refreshLucky: document.getElementById('refreshLucky'),
+            // Mood Pet Tab
+            moodPetEmoji: document.getElementById('moodPetEmoji'),
+            hungerValue: document.getElementById('hungerValue'),
+            thirstValue: document.getElementById('thirstValue'),
+            energyValue: document.getElementById('energyValue'),
+            hungerBar: document.getElementById('hungerBar'),
+            thirstBar: document.getElementById('thirstBar'),
+            energyBar: document.getElementById('energyBar'),
             
             // Community Page
             citizensList: document.getElementById('citizensList'),
@@ -2470,6 +2634,7 @@
             sendMessage: document.getElementById('sendMessage'),
             
             // Profile Page
+            profileBanner: document.getElementById('profileBanner'),
             profileAvatarLarge: document.getElementById('profileAvatarLarge'),
             profileName: document.getElementById('profileName'),
             profileUsername: document.getElementById('profileUsername'),
@@ -2490,13 +2655,6 @@
             
             // Modals
             editProfileModal: document.getElementById('editProfileModal'),
-            closeEditModal: document.getElementById('closeEditModal'),
-            cancelEdit: document.getElementById('cancelEdit'),
-            editDisplayName: document.getElementById('editDisplayName'),
-            editUsername: document.getElementById('editUsername'),
-            editStatus: document.getElementById('editStatus'),
-            saveProfile: document.getElementById('saveProfile'),
-            
             deleteAccountModal: document.getElementById('deleteAccountModal'),
             closeDeleteModal: document.getElementById('closeDeleteModal'),
             cancelDelete: document.getElementById('cancelDelete'),
@@ -2514,41 +2672,17 @@
             setupEventListeners();
             setupDefaultData();
             
-            // Check if user is logged in
-            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-            if (currentUser) {
-                AppState.currentUser = currentUser;
-                showApp();
-                
-                // Check if mood is set for today
-                const today = new Date().toDateString();
-                if (!AppState.currentUser.lastMoodDate || new Date(AppState.currentUser.lastMoodDate).toDateString() !== today) {
-                    showMoodModal();
-                } else {
-                    updateMoodDisplay();
-                }
-            } else {
-                showAuth();
-            }
+            // Clear current user to force login
+            AppState.currentUser = null;
+            localStorage.removeItem('currentUser');
+            
+            showAuth();
             
             // Update daily quote
             updateDailyQuote();
             
-            // Set next horoscope time
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            tomorrow.setHours(0, 0, 0, 0);
-            elements.nextHoroscope.textContent = `Tomorrow, 12:00 AM`;
-            
-            // Set default dates for birthday inputs (18+ years ago)
-            const defaultDate = new Date();
-            defaultDate.setFullYear(defaultDate.getFullYear() - 18);
-            const defaultDateStr = defaultDate.toISOString().split('T')[0];
-            elements.birthday1.value = defaultDateStr;
-            elements.birthday2.value = defaultDateStr;
-            
-            // Initialize quiz
-            updateQuizQuestion();
+            // Start mood pet updates
+            startMoodPetUpdates();
         }
 
         // Event Listeners Setup
@@ -2593,6 +2727,12 @@
                     button.classList.add('active');
                     
                     closeSidebar();
+                    
+                    // Clear notifications for community tab
+                    if (page === 'community') {
+                        AppState.notifications.community = 0;
+                        updateNotificationBadges();
+                    }
                 });
             });
             
@@ -2606,6 +2746,12 @@
                     // Update active state
                     elements.navLinks.forEach(l => l.classList.remove('active'));
                     link.classList.add('active');
+                    
+                    // Clear notifications for community tab
+                    if (page === 'community') {
+                        AppState.notifications.community = 0;
+                        updateNotificationBadges();
+                    }
                 });
             });
             
@@ -2652,15 +2798,18 @@
             elements.nextQuestion.addEventListener('click', handleNextQuestion);
             elements.restartQuiz.addEventListener('click', restartQuiz);
             
-            // Meditation Tab
-            elements.startMeditation.addEventListener('click', startMeditationTimer);
-            elements.pauseMeditation.addEventListener('click', pauseMeditationTimer);
-            elements.resetMeditation.addEventListener('click', resetMeditationTimer);
-            
-            // Zodiac Features
-            elements.calculateLove.addEventListener('click', calculateLoveMatch);
-            elements.zodiacSelect.addEventListener('change', updateZodiacInfo);
-            elements.refreshLucky.addEventListener('click', generateLuckyPredictions);
+            // Mood Pet Tab
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('feed-btn')) {
+                    feedPet();
+                }
+                if (e.target.classList.contains('water-btn')) {
+                    waterPet();
+                }
+                if (e.target.classList.contains('play-btn')) {
+                    playWithPet();
+                }
+            });
             
             // Community
             elements.sendMessage.addEventListener('click', sendChatMessage);
@@ -2675,22 +2824,13 @@
             elements.editProfileSettings.addEventListener('click', showEditProfileModal);
             
             // Settings
+            elements.darkModeToggle.addEventListener('change', toggleDarkMode);
             elements.logoutButton.addEventListener('click', handleLogout);
             elements.deleteAccount.addEventListener('click', () => {
                 elements.deleteAccountModal.classList.remove('hidden');
             });
             
             // Modal Controls
-            elements.closeEditModal.addEventListener('click', () => {
-                elements.editProfileModal.classList.add('hidden');
-            });
-            
-            elements.cancelEdit.addEventListener('click', () => {
-                elements.editProfileModal.classList.add('hidden');
-            });
-            
-            elements.saveProfile.addEventListener('click', saveProfileChanges);
-            
             elements.closeDeleteModal.addEventListener('click', () => {
                 elements.deleteAccountModal.classList.add('hidden');
             });
@@ -2753,6 +2893,9 @@
                 return;
             }
             
+            // Check for creator status
+            const citizenStatus = email === 'travismiguel014@gmail.com' ? 'Creator' : 'Citizen';
+            
             // Create new user
             const newUser = {
                 id: Date.now(),
@@ -2760,10 +2903,12 @@
                 username: username.startsWith('@') ? username : '@' + username,
                 email,
                 password,
-                status: 'Citizen',
+                status: citizenStatus,
+                profilePicture: null,
+                bannerColor: '#46178f',
                 mood: null,
                 lastMoodDate: null,
-                streak: 0,
+                streak: 1,
                 followers: 0,
                 following: 0,
                 posts: 0,
@@ -2893,15 +3038,20 @@
             // Update profile
             elements.sidebarUserName.textContent = AppState.currentUser.displayName;
             elements.sidebarUserStatus.textContent = AppState.currentUser.status;
-            elements.userAvatarSidebar.textContent = AppState.currentUser.displayName.charAt(0);
-            elements.mobileUserAvatar.textContent = AppState.currentUser.displayName.charAt(0);
+            
+            // Update avatar with profile picture or initial
+            updateProfilePicture();
             
             elements.profileName.textContent = AppState.currentUser.displayName.toUpperCase();
             elements.profileUsername.textContent = AppState.currentUser.username;
-            elements.profileAvatarLarge.textContent = AppState.currentUser.displayName.charAt(0);
             elements.profileFollowers.textContent = AppState.currentUser.followers;
             elements.profileFollowing.textContent = AppState.currentUser.following;
             elements.profileStreak.textContent = AppState.currentUser.streak;
+            
+            // Update banner color
+            if (elements.profileBanner && AppState.currentUser.bannerColor) {
+                elements.profileBanner.style.background = `linear-gradient(135deg, ${AppState.currentUser.bannerColor}, ${darkenColor(AppState.currentUser.bannerColor, 20)})`;
+            }
             
             // Update stats
             updateStatsDisplay();
@@ -2925,9 +3075,11 @@
                 userId: AppState.currentUser.id,
                 userName: AppState.currentUser.displayName,
                 userInitial: AppState.currentUser.displayName.charAt(0),
+                userProfilePicture: AppState.currentUser.profilePicture,
                 content: postContent,
                 timestamp: new Date().toISOString(),
                 likes: 0,
+                likedBy: [],
                 comments: [],
                 reposts: 0,
                 likedByUser: false,
@@ -2965,8 +3117,8 @@
                 postElement.className = 'card post-card';
                 postElement.innerHTML = `
                     <div class="post-header">
-                        <div class="post-avatar" style="background-color: ${getColorFromName(post.userName)};">
-                            ${post.userInitial}
+                        <div class="post-avatar" style="background-color: ${getColorFromName(post.userName)}; ${post.userProfilePicture ? `background-image: url('${post.userProfilePicture}')` : ''}">
+                            ${post.userProfilePicture ? '' : post.userInitial}
                         </div>
                         <div class="post-user-info">
                             <div class="post-user-name">
@@ -2989,21 +3141,41 @@
                             <i class="fas fa-retweet"></i> <span>${post.reposts}</span>
                         </button>
                     </div>
-                    ${post.comments.length > 0 ? `
-                        <div class="comment-section">
-                            <div class="comments-list">
-                                ${post.comments.map(comment => `
-                                    <div class="comment">
-                                        <div class="comment-header">
-                                            <span class="comment-user">${comment.userName}</span>
-                                            <span class="comment-time">${formatTime(comment.timestamp)}</span>
-                                        </div>
-                                        <div class="comment-text">${comment.text}</div>
+                    <div class="comment-section">
+                        <div class="comments-list" id="comments-${post.id}">
+                            ${post.comments.map(comment => `
+                                <div class="comment">
+                                    <div class="comment-header">
+                                        <span class="comment-user">${comment.userName}</span>
+                                        <span class="comment-time">${formatTime(comment.timestamp)}</span>
                                     </div>
-                                `).join('')}
-                            </div>
+                                    <div class="comment-text">${comment.text}</div>
+                                    ${comment.replies && comment.replies.length > 0 ? `
+                                        <div class="replies">
+                                            ${comment.replies.map(reply => `
+                                                <div class="comment">
+                                                    <div class="comment-header">
+                                                        <span class="comment-user">${reply.userName}</span>
+                                                        <span class="comment-time">${formatTime(reply.timestamp)}</span>
+                                                    </div>
+                                                    <div class="comment-text">${reply.text}</div>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    ` : ''}
+                                    <button class="reply-btn" data-comment-id="${comment.id}" data-post-id="${post.id}">
+                                        <i class="fas fa-reply"></i> Reply
+                                    </button>
+                                </div>
+                            `).join('')}
                         </div>
-                    ` : ''}
+                        <div class="comment-input-area">
+                            <input type="text" class="comment-input" id="comment-input-${post.id}" placeholder="Add a comment...">
+                            <button class="btn btn-primary" data-action="add-comment" data-id="${post.id}">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
                 `;
                 
                 elements.postsList.appendChild(postElement);
@@ -3021,16 +3193,30 @@
                     case 'like':
                         handlePostLike(postId);
                         break;
-                    case 'comment':
-                        const commentText = prompt('Enter your comment:');
-                        if (commentText && commentText.trim()) {
+                    case 'add-comment':
+                        const commentInput = document.getElementById(`comment-input-${postId}`);
+                        const commentText = commentInput.value.trim();
+                        if (commentText) {
                             addComment(postId, commentText);
+                            commentInput.value = '';
                         }
                         break;
                     case 'repost':
                         handleRepost(postId);
                         break;
                 }
+            });
+            
+            // Reply button event listeners
+            document.querySelectorAll('.reply-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const commentId = parseInt(btn.getAttribute('data-comment-id'));
+                    const postId = parseInt(btn.getAttribute('data-post-id'));
+                    const replyText = prompt('Enter your reply:');
+                    if (replyText && replyText.trim()) {
+                        addReply(postId, commentId, replyText);
+                    }
+                });
             });
             
             // Follow buttons
@@ -3054,9 +3240,24 @@
             if (post.likedByUser) {
                 post.likes--;
                 post.likedByUser = false;
+                post.likedBy = post.likedBy.filter(id => id !== AppState.currentUser.id);
+                
+                // Decrease notification if not current user's post
+                if (post.userId !== AppState.currentUser.id) {
+                    AppState.notifications.mood.likes = Math.max(0, AppState.notifications.mood.likes - 1);
+                    updateNotificationBadges();
+                }
             } else {
                 post.likes++;
                 post.likedByUser = true;
+                post.likedBy.push(AppState.currentUser.id);
+                
+                // Add notification if not current user's post
+                if (post.userId !== AppState.currentUser.id) {
+                    AppState.notifications.mood.likes++;
+                    updateNotificationBadges();
+                    showToast(`${post.userName} liked your post!`);
+                }
             }
             
             renderPosts();
@@ -3073,12 +3274,50 @@
                 userId: AppState.currentUser.id,
                 userName: AppState.currentUser.displayName,
                 text: commentText,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                replies: []
             };
             
             post.comments.push(comment);
+            
+            // Add notification if not current user's post
+            if (post.userId !== AppState.currentUser.id) {
+                AppState.notifications.mood.comments++;
+                updateNotificationBadges();
+                showToast(`${post.userName} commented on your post!`);
+            }
+            
             renderPosts();
             updateStatsDisplay();
+            saveToLocalStorage();
+        }
+
+        function addReply(postId, commentId, replyText) {
+            const post = AppState.posts.find(p => p.id === postId);
+            if (!post) return;
+            
+            const comment = post.comments.find(c => c.id === commentId);
+            if (!comment) return;
+            
+            const reply = {
+                id: Date.now(),
+                userId: AppState.currentUser.id,
+                userName: AppState.currentUser.displayName,
+                text: replyText,
+                timestamp: new Date().toISOString()
+            };
+            
+            if (!comment.replies) comment.replies = [];
+            comment.replies.push(reply);
+            
+            // Add notification if not current user's comment
+            if (comment.userId !== AppState.currentUser.id) {
+                AppState.notifications.mood.comments++;
+                updateNotificationBadges();
+                showToast(`${comment.userName} replied to your comment!`);
+            }
+            
+            renderPosts();
             saveToLocalStorage();
         }
 
@@ -3087,6 +3326,13 @@
             if (!post) return;
             
             post.reposts++;
+            
+            // Add notification if not current user's post
+            if (post.userId !== AppState.currentUser.id) {
+                AppState.notifications.mood.reposts++;
+                updateNotificationBadges();
+                showToast(`${post.userName} reposted your post!`);
+            }
             
             // Create a repost entry for current user
             const repost = {
@@ -3120,14 +3366,38 @@
                 return;
             }
             
-            const randomResponse = AppState.tellerResponses[Math.floor(Math.random() * AppState.tellerResponses.length)];
-            
-            elements.tellerAnswer.innerHTML = `
-                <p><strong>Question:</strong> ${question}</p>
-                <p><strong>Answer:</strong> ${randomResponse}</p>
+            // Show response buttons
+            const responseButtons = document.createElement('div');
+            responseButtons.className = 'teller-response-buttons';
+            responseButtons.innerHTML = `
+                <button class="btn btn-light" data-response="yes">Yes</button>
+                <button class="btn btn-light" data-response="no">No</button>
+                <button class="btn btn-light" data-response="maybe">Maybe</button>
+                <button class="btn btn-light" data-response="i dont think so">I don't think so</button>
             `;
-            elements.tellerAnswer.style.display = 'block';
-            elements.tellerQuestion.value = '';
+            
+            // Remove previous buttons if they exist
+            const existingButtons = document.querySelector('.teller-response-buttons');
+            if (existingButtons) existingButtons.remove();
+            
+            elements.tellerAnswer.parentNode.insertBefore(responseButtons, elements.tellerAnswer.nextSibling);
+            
+            // Add event listeners to response buttons
+            responseButtons.querySelectorAll('button').forEach(button => {
+                button.addEventListener('click', () => {
+                    const response = button.getAttribute('data-response');
+                    const randomResponse = AppState.tellerResponses[response][Math.floor(Math.random() * AppState.tellerResponses[response].length)];
+                    
+                    elements.tellerAnswer.innerHTML = `
+                        <p><strong>Question:</strong> ${question}</p>
+                        <p><strong>Your Response:</strong> ${response.charAt(0).toUpperCase() + response.slice(1)}</p>
+                        <p><strong>Interpretation:</strong> ${randomResponse}</p>
+                    `;
+                    elements.tellerAnswer.style.display = 'block';
+                    elements.tellerQuestion.value = '';
+                    responseButtons.remove();
+                });
+            });
         }
 
         // Quiz Functions
@@ -3162,8 +3432,15 @@
         function showQuizResult() {
             // Calculate result based on answers
             const sum = AppState.quizState.answers.reduce((a, b) => a + b, 0);
-            const resultIndex = Math.floor(sum / AppState.quizState.answers.length) - 1;
-            const result = AppState.quizState.results[resultIndex] || AppState.quizState.results[0];
+            const avg = sum / AppState.quizState.answers.length;
+            let resultIndex = 0;
+            
+            if (avg <= 1.5) resultIndex = 0;
+            else if (avg <= 2.5) resultIndex = 1;
+            else if (avg <= 3.5) resultIndex = 2;
+            else resultIndex = 3;
+            
+            const result = AppState.quizState.results[resultIndex];
             
             elements.quizResultTitle.textContent = result.title;
             elements.quizResultDescription.textContent = result.description;
@@ -3186,80 +3463,426 @@
             updateQuizQuestion();
         }
 
-        // Meditation Functions
-        function startMeditationTimer() {
-            if (AppState.meditationTimer.isRunning) return;
-            
-            AppState.meditationTimer.isRunning = true;
-            elements.startMeditation.classList.add('hidden');
-            elements.pauseMeditation.classList.remove('hidden');
-            
-            // Update wisdom text
-            const randomWisdom = AppState.wisdomQuotes[Math.floor(Math.random() * AppState.wisdomQuotes.length)];
-            elements.wisdomText.textContent = randomWisdom;
-            
-            AppState.meditationTimer.interval = setInterval(() => {
-                AppState.meditationTimer.timeLeft--;
-                
-                if (AppState.meditationTimer.timeLeft <= 0) {
-                    clearInterval(AppState.meditationTimer.interval);
-                    AppState.meditationTimer.isRunning = false;
-                    elements.meditationTimer.textContent = '00:00';
-                    elements.startMeditation.classList.remove('hidden');
-                    elements.pauseMeditation.classList.add('hidden');
-                    showToast('Meditation session complete!');
-                } else {
-                    updateTimerDisplay();
-                }
-            }, 1000);
+        // Mood Pet Functions
+        function startMoodPetUpdates() {
+            // Update pet every minute
+            setInterval(updateMoodPet, 60000);
+            updateMoodPet();
         }
 
-        function pauseMeditationTimer() {
-            if (!AppState.meditationTimer.isRunning) return;
+        function updateMoodPet() {
+            // Gradually decrease needs
+            const timePassed = Date.now() - AppState.moodPet.lastUpdate;
+            const minutesPassed = Math.floor(timePassed / 60000);
             
-            clearInterval(AppState.meditationTimer.interval);
-            AppState.meditationTimer.isRunning = false;
-            elements.startMeditation.classList.remove('hidden');
-            elements.pauseMeditation.classList.add('hidden');
+            if (minutesPassed > 0) {
+                AppState.moodPet.hunger = Math.max(0, AppState.moodPet.hunger - minutesPassed * 2);
+                AppState.moodPet.thirst = Math.max(0, AppState.moodPet.thirst - minutesPassed * 3);
+                AppState.moodPet.energy = Math.max(0, AppState.moodPet.energy - minutesPassed * 1);
+                AppState.moodPet.lastUpdate = Date.now();
+            }
+            
+            // Update UI
+            elements.hungerValue.textContent = `${AppState.moodPet.hunger}%`;
+            elements.thirstValue.textContent = `${AppState.moodPet.thirst}%`;
+            elements.energyValue.textContent = `${AppState.moodPet.energy}%`;
+            
+            elements.hungerBar.style.width = `${AppState.moodPet.hunger}%`;
+            elements.thirstBar.style.width = `${AppState.moodPet.thirst}%`;
+            elements.energyBar.style.width = `${AppState.moodPet.energy}%`;
+            
+            // Update emoji based on needs
+            let emoji = '😊'; // Happy default
+            
+            if (AppState.moodPet.hunger < 30) emoji = '😋'; // Hungry
+            if (AppState.moodPet.thirst < 20) emoji = '🥵'; // Thirsty
+            if (AppState.moodPet.energy < 15) emoji = '😴'; // Tired
+            if (AppState.moodPet.hunger < 10 || AppState.moodPet.thirst < 10) emoji = '😫'; // Very hungry/thirsty
+            
+            elements.moodPetEmoji.textContent = emoji;
         }
 
-        function resetMeditationTimer() {
-            clearInterval(AppState.meditationTimer.interval);
-            AppState.meditationTimer.isRunning = false;
-            AppState.meditationTimer.timeLeft = 300;
-            updateTimerDisplay();
-            elements.startMeditation.classList.remove('hidden');
-            elements.pauseMeditation.classList.add('hidden');
+        function feedPet() {
+            AppState.moodPet.hunger = Math.min(100, AppState.moodPet.hunger + 25);
+            AppState.moodPet.energy = Math.max(0, AppState.moodPet.energy - 5);
+            updateMoodPet();
+            showToast('Pet fed! Hunger decreased, energy slightly reduced.');
         }
 
-        function updateTimerDisplay() {
-            const minutes = Math.floor(AppState.meditationTimer.timeLeft / 60);
-            const seconds = AppState.meditationTimer.timeLeft % 60;
-            elements.meditationTimer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        function waterPet() {
+            AppState.moodPet.thirst = Math.min(100, AppState.moodPet.thirst + 30);
+            updateMoodPet();
+            showToast('Pet watered! Thirst decreased.');
+        }
+
+        function playWithPet() {
+            AppState.moodPet.energy = Math.min(100, AppState.moodPet.energy + 20);
+            AppState.moodPet.hunger = Math.max(0, AppState.moodPet.hunger - 10);
+            AppState.moodPet.thirst = Math.max(0, AppState.moodPet.thirst - 15);
+            updateMoodPet();
+            showToast('Played with pet! Energy increased, hunger and thirst slightly reduced.');
         }
 
         // Zodiac Functions
-        function calculateLoveMatch() {
-            const date1 = elements.birthday1.value;
-            const date2 = elements.birthday2.value;
+        function updateZodiacPage() {
+            const zodiacPage = document.getElementById('zodiacPage');
+            if (!zodiacPage) return;
             
-            if (!date1 || !date2) {
-                alert('Please enter both birthdays');
+            zodiacPage.innerHTML = `
+                <div class="page-header">
+                    <h1 class="page-title">COSMIC OBSERVATORY</h1>
+                    <p class="page-subtitle">Explore the Stars and Their Secrets</p>
+                </div>
+
+                <div class="tabs" id="zodiacTabs">
+                    <button class="tab active" data-tab="love">Love Matcher</button>
+                    <button class="tab" data-tab="horoscope">Daily Horoscope</button>
+                    <button class="tab" data-tab="almanac">Zodiac Almanac</button>
+                    <button class="tab" data-tab="lucky">Lucky Day</button>
+                </div>
+
+                <!-- Love Matcher Tab -->
+                <div id="loveTab" class="tab-content active">
+                    <div class="card">
+                        <h3 class="card-title">Love Matcher</h3>
+                        <p>Select birth months and days to check compatibility:</p>
+                        
+                        <div class="birthday-inputs">
+                            <div class="select-group">
+                                <label>Person 1:</label>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <select id="loveMonth1" class="select-box" style="flex: 1;">
+                                        <option value="">Month</option>
+                                    </select>
+                                    <select id="loveDay1" class="select-box" style="flex: 1;">
+                                        <option value="">Day</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="select-group">
+                                <label>Person 2:</label>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <select id="loveMonth2" class="select-box" style="flex: 1;">
+                                        <option value="">Month</option>
+                                    </select>
+                                    <select id="loveDay2" class="select-box" style="flex: 1;">
+                                        <option value="">Day</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary btn-block" id="calculateLove">
+                            <i class="fas fa-heart"></i> Calculate Match
+                        </button>
+                        
+                        <div class="compatibility-result mt-2" id="compatibilityResult">
+                            <div class="compatibility-percent" id="matchPercentage">85%</div>
+                            <p id="matchDescription">Excellent compatibility! The stars align for this union.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daily Horoscope Tab -->
+                <div id="horoscopeTab" class="tab-content">
+                    <div class="card">
+                        <h3 class="card-title">Daily Horoscope</h3>
+                        <p>Select your zodiac sign for today's predictions:</p>
+                        
+                        <select id="horoscopeSelect" class="select-box">
+                            <option value="">Choose your zodiac sign</option>
+                        </select>
+                        
+                        <div class="horoscope-card">
+                            <div class="horoscope-sign" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                                <div style="font-size: 2rem;">♉</div>
+                                <div>
+                                    <h4 style="font-weight: 800; color: var(--gray-800);">Taurus</h4>
+                                    <p style="color: var(--gray-500); font-size: 0.85rem;">Apr 20 - May 20</p>
+                                </div>
+                            </div>
+                            <p id="horoscopeText" style="line-height: 1.5;">
+                                Today brings opportunities for financial growth. Trust your instincts when making decisions.
+                            </p>
+                            <div class="mt-2 pt-2" style="border-top: 1px solid var(--gray-200);">
+                                <p style="color: var(--gray-500); font-size: 0.8rem;">
+                                    Prediction locked until: <span id="nextHoroscope">Tomorrow, 12:00 AM</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Zodiac Almanac Tab -->
+                <div id="almanacTab" class="tab-content">
+                    <div class="card">
+                        <h3 class="card-title">Zodiac Almanac</h3>
+                        <select id="zodiacSelect" class="select-box">
+                            <option value="aries">♈ Aries (Mar 21 - Apr 19)</option>
+                            <option value="taurus" selected>♉ Taurus (Apr 20 - May 20)</option>
+                            <option value="gemini">♊ Gemini (May 21 - Jun 20)</option>
+                            <option value="cancer">♋ Cancer (Jun 21 - Jul 22)</option>
+                            <option value="leo">♌ Leo (Jul 23 - Aug 22)</option>
+                            <option value="virgo">♍ Virgo (Aug 23 - Sep 22)</option>
+                            <option value="libra">♎ Libra (Sep 23 - Oct 22)</option>
+                            <option value="scorpio">♏ Scorpio (Oct 23 - Nov 21)</option>
+                            <option value="sagittarius">♐ Sagittarius (Nov 22 - Dec 21)</option>
+                            <option value="capricorn">♑ Capricorn (Dec 22 - Jan 19)</option>
+                            <option value="aquarius">♒ Aquarius (Jan 20 - Feb 18)</option>
+                            <option value="pisces">♓ Pisces (Feb 19 - Mar 20)</option>
+                        </select>
+                        <div id="zodiacInfo" style="padding: 1rem; background-color: var(--gray-50); border-radius: var(--radius);">
+                            <p style="margin-bottom: 0.5rem;"><strong>Element:</strong> <span id="zodiacElement">Earth</span></p>
+                            <p style="margin-bottom: 0.5rem;"><strong>Ruling Planet:</strong> <span id="zodiacPlanet">Venus</span></p>
+                            <p id="zodiacDescription" style="line-height: 1.5; font-size: 0.9rem;">
+                                Taurus is known for reliability, practicality, and a love for comfort and beauty.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lucky Day Tab -->
+                <div id="luckyTab" class="tab-content">
+                    <div class="card">
+                        <h3 class="card-title">Lucky Day</h3>
+                        <p>Select your zodiac sign for lucky predictions:</p>
+                        
+                        <select id="luckyDaySelect" class="select-box">
+                            <option value="">Choose your zodiac sign</option>
+                        </select>
+                        
+                        <div class="lucky-sign" style="text-align: center; margin: 1rem 0;">
+                            <div style="font-size: 2rem;">♉</div>
+                            <div style="font-weight: 800; color: var(--primary-purple);">Taurus</div>
+                        </div>
+                        
+                        <div style="text-align: center;">
+                            <h4 style="color: var(--primary-purple); margin-bottom: 1rem;">Today's Predictions</h4>
+                            <div class="lucky-items">
+                                <div class="lucky-item">
+                                    <div class="lucky-color" id="luckyColorBox" style="background-color: #ffa602;"></div>
+                                    <div style="font-weight: 700; font-size: 0.9rem;">Lucky Color</div>
+                                    <div id="luckyColorName" style="color: var(--accent-orange); font-weight: 600;">Orange</div>
+                                </div>
+                                <div class="lucky-item">
+                                    <div class="lucky-number" id="luckyNumberDisplay">7</div>
+                                    <div style="font-weight: 700; font-size: 0.9rem;">Lucky Number</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary mt-2" id="refreshLucky">
+                                <i class="fas fa-sync"></i> Get New Predictions
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add tab switching
+            document.querySelectorAll('#zodiacTabs .tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.getAttribute('data-tab');
+                    
+                    // Update active tab
+                    document.querySelectorAll('#zodiacTabs .tab').forEach(t => {
+                        t.classList.toggle('active', t === tab);
+                    });
+                    
+                    // Hide all tab contents
+                    document.querySelectorAll('#zodiacPage .tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    // Show selected tab
+                    const selectedTab = document.getElementById(`${tabName}Tab`);
+                    if (selectedTab) {
+                        selectedTab.classList.add('active');
+                    }
+                    
+                    // Initialize the tab
+                    if (tabName === 'love') {
+                        initLoveMatcherSelects();
+                    } else if (tabName === 'horoscope') {
+                        initHoroscopeSelect();
+                    } else if (tabName === 'lucky') {
+                        initLuckyDaySelect();
+                    }
+                });
+            });
+            
+            // Initialize the first tab
+            initLoveMatcherSelects();
+            initHoroscopeSelect();
+            initLuckyDaySelect();
+            
+            // Set next horoscope time
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+            const nextHoroscope = document.getElementById('nextHoroscope');
+            if (nextHoroscope) {
+                nextHoroscope.textContent = `Tomorrow, 12:00 AM`;
+            }
+            
+            // Reattach event listeners
+            setTimeout(() => {
+                const calculateLove = document.getElementById('calculateLove');
+                const zodiacSelect = document.getElementById('zodiacSelect');
+                const refreshLucky = document.getElementById('refreshLucky');
+                const horoscopeSelect = document.getElementById('horoscopeSelect');
+                const luckyDaySelect = document.getElementById('luckyDaySelect');
+                
+                if (calculateLove) {
+                    calculateLove.addEventListener('click', calculateLoveMatch);
+                }
+                if (zodiacSelect) {
+                    zodiacSelect.addEventListener('change', updateZodiacInfo);
+                }
+                if (refreshLucky) {
+                    refreshLucky.addEventListener('click', generateLuckyPredictions);
+                }
+                if (horoscopeSelect) {
+                    horoscopeSelect.addEventListener('change', updateHoroscope);
+                }
+                if (luckyDaySelect) {
+                    luckyDaySelect.addEventListener('change', updateLuckyDay);
+                }
+            }, 100);
+        }
+
+        function initLoveMatcherSelects() {
+            const monthSelect1 = document.getElementById('loveMonth1');
+            const daySelect1 = document.getElementById('loveDay1');
+            const monthSelect2 = document.getElementById('loveMonth2');
+            const daySelect2 = document.getElementById('loveDay2');
+            
+            if (!monthSelect1) return;
+            
+            // Clear existing options
+            monthSelect1.innerHTML = '<option value="">Month</option>';
+            daySelect1.innerHTML = '<option value="">Day</option>';
+            monthSelect2.innerHTML = '<option value="">Month</option>';
+            daySelect2.innerHTML = '<option value="">Day</option>';
+            
+            // Populate month selects
+            AppState.months.forEach((month, index) => {
+                const option1 = document.createElement('option');
+                const option2 = document.createElement('option');
+                option1.value = index + 1;
+                option1.textContent = month;
+                option2.value = index + 1;
+                option2.textContent = month;
+                monthSelect1.appendChild(option1);
+                monthSelect2.appendChild(option2);
+            });
+            
+            // Populate day selects
+            AppState.days.forEach(day => {
+                const option1 = document.createElement('option');
+                const option2 = document.createElement('option');
+                option1.value = day;
+                option1.textContent = day;
+                option2.value = day;
+                option2.textContent = day;
+                daySelect1.appendChild(option1);
+                daySelect2.appendChild(option2);
+            });
+            
+            // Set default values
+            monthSelect1.value = 4; // April
+            monthSelect2.value = 7; // July
+            daySelect1.value = 20;
+            daySelect2.value = 23;
+        }
+
+        function initHoroscopeSelect() {
+            const select = document.getElementById('horoscopeSelect');
+            if (!select) return;
+            
+            // Clear existing options
+            select.innerHTML = '<option value="">Choose your zodiac sign</option>';
+            
+            Object.keys(AppState.zodiacData.signs).forEach(sign => {
+                const option = document.createElement('option');
+                option.value = sign;
+                const signName = sign.charAt(0).toUpperCase() + sign.slice(1);
+                const symbol = getZodiacSymbol(sign);
+                option.textContent = `${symbol} ${signName}`;
+                select.appendChild(option);
+            });
+            
+            select.value = 'taurus';
+            updateHoroscope();
+        }
+
+        function initLuckyDaySelect() {
+            const select = document.getElementById('luckyDaySelect');
+            if (!select) return;
+            
+            // Clear existing options
+            select.innerHTML = '<option value="">Choose your zodiac sign</option>';
+            
+            Object.keys(AppState.zodiacData.signs).forEach(sign => {
+                const option = document.createElement('option');
+                option.value = sign;
+                const signName = sign.charAt(0).toUpperCase() + sign.slice(1);
+                option.textContent = `${signName}`;
+                select.appendChild(option);
+            });
+            
+            select.value = 'taurus';
+            updateLuckyDay();
+        }
+
+        function calculateLoveMatch() {
+            const month1 = parseInt(document.getElementById('loveMonth1').value);
+            const day1 = parseInt(document.getElementById('loveDay1').value);
+            const month2 = parseInt(document.getElementById('loveMonth2').value);
+            const day2 = parseInt(document.getElementById('loveDay2').value);
+            
+            if (!month1 || !day1 || !month2 || !day2) {
+                alert('Please select both birth dates');
                 return;
             }
             
-            // Simple compatibility calculation
-            const d1 = new Date(date1);
-            const d2 = new Date(date2);
-            
             // Get zodiac signs
-            const sign1 = getZodiacSign(d1.getMonth() + 1, d1.getDate());
-            const sign2 = getZodiacSign(d2.getMonth() + 1, d2.getDate());
+            const sign1 = getZodiacSign(month1, day1);
+            const sign2 = getZodiacSign(month2, day2);
             
-            // Calculate compatibility (random for demo)
-            const compatibility = Math.floor(Math.random() * 30) + 70; // 70-99%
+            // Calculate compatibility
+            const element1 = AppState.zodiacData.signs[sign1.toLowerCase()]?.element;
+            const element2 = AppState.zodiacData.signs[sign2.toLowerCase()]?.element;
             
-            elements.matchPercentage.textContent = `${compatibility}%`;
+            let compatibility = 50; // Base compatibility
+            
+            // Element compatibility logic
+            if (element1 === element2) {
+                compatibility += 30; // Same element
+            } else if (
+                (element1 === 'Fire' && element2 === 'Air') ||
+                (element1 === 'Air' && element2 === 'Fire') ||
+                (element1 === 'Water' && element2 === 'Earth') ||
+                (element1 === 'Earth' && element2 === 'Water')
+            ) {
+                compatibility += 20; // Compatible elements
+            } else if (
+                (element1 === 'Fire' && element2 === 'Water') ||
+                (element1 === 'Water' && element2 === 'Fire') ||
+                (element1 === 'Air' && element2 === 'Earth') ||
+                (element1 === 'Earth' && element2 === 'Air')
+            ) {
+                compatibility -= 10; // Challenging elements
+            }
+            
+            // Add some randomness
+            compatibility += Math.floor(Math.random() * 20) - 10;
+            compatibility = Math.max(10, Math.min(100, compatibility));
+            
+            const matchPercentage = document.getElementById('matchPercentage');
+            const matchDescription = document.getElementById('matchDescription');
+            const compatibilityResult = document.getElementById('compatibilityResult');
+            
+            if (matchPercentage) matchPercentage.textContent = `${compatibility}%`;
             
             let description = '';
             if (compatibility >= 90) {
@@ -3268,12 +3891,14 @@
                 description = 'Excellent compatibility! A strong and harmonious connection.';
             } else if (compatibility >= 70) {
                 description = 'Good match! With understanding and effort, this can work well.';
+            } else if (compatibility >= 50) {
+                description = 'Moderate compatibility. Differences can be complementary.';
             } else {
                 description = 'Challenging match. Differences may require extra understanding.';
             }
             
-            elements.matchDescription.textContent = `${description} (${sign1} & ${sign2})`;
-            elements.compatibilityResult.style.display = 'block';
+            if (matchDescription) matchDescription.textContent = `${description} (${sign1} & ${sign2})`;
+            if (compatibilityResult) compatibilityResult.style.display = 'block';
         }
 
         function getZodiacSign(month, day) {
@@ -3292,20 +3917,112 @@
             return 'Unknown';
         }
 
-        function updateZodiacInfo() {
-            const sign = elements.zodiacSelect.value;
-            const zodiacInfo = AppState.zodiacData.signs[sign];
+        function getZodiacSymbol(sign) {
+            const symbols = {
+                aries: '♈',
+                taurus: '♉',
+                gemini: '♊',
+                cancer: '♋',
+                leo: '♌',
+                virgo: '♍',
+                libra: '♎',
+                scorpio: '♏',
+                sagittarius: '♐',
+                capricorn: '♑',
+                aquarius: '♒',
+                pisces: '♓'
+            };
+            return symbols[sign.toLowerCase()] || '♉';
+        }
+
+        function updateHoroscope() {
+            const select = document.getElementById('horoscopeSelect');
+            const horoscopeText = document.getElementById('horoscopeText');
+            if (!select || !horoscopeText) return;
             
-            if (zodiacInfo) {
-                elements.zodiacElement.textContent = zodiacInfo.element;
-                elements.zodiacPlanet.textContent = zodiacInfo.planet;
-                elements.zodiacDescription.textContent = zodiacInfo.description;
+            const sign = select.value;
+            if (!sign) return;
+            
+            const signName = sign.charAt(0).toUpperCase() + sign.slice(1);
+            const horoscopes = [
+                "Today brings opportunities for financial growth. Trust your instincts when making decisions.",
+                "A surprise encounter may change your perspective. Stay open to new experiences.",
+                "Communication is key today. Express your feelings clearly and listen to others.",
+                "Focus on self-care. Your energy needs replenishment.",
+                "Creative inspiration strikes! Channel it into your projects.",
+                "Teamwork leads to success. Collaborate with others.",
+                "Balance work and play. Too much of either can be draining.",
+                "Your intuition is strong today. Trust your gut feelings.",
+                "Adventure calls! Try something new and exciting.",
+                "Patience brings rewards. Don't rush important decisions.",
+                "Innovation is your strength. Think outside the box.",
+                "Emotional depth surfaces. Reflect on your feelings."
+            ];
+            
+            const randomHoroscope = horoscopes[Math.floor(Math.random() * horoscopes.length)];
+            horoscopeText.textContent = randomHoroscope;
+            
+            // Update sign display
+            const signDisplay = document.querySelector('#horoscopeTab .horoscope-sign');
+            if (signDisplay) {
+                signDisplay.innerHTML = `
+                    <div style="font-size: 2rem;">${getZodiacSymbol(sign)}</div>
+                    <div>
+                        <h4 style="font-weight: 800; color: var(--gray-800);">${signName}</h4>
+                        <p style="color: var(--gray-500); font-size: 0.85rem;">${getZodiacDateRange(sign)}</p>
+                    </div>
+                `;
             }
         }
 
-        function generateLuckyPredictions() {
+        function getZodiacDateRange(sign) {
+            const ranges = {
+                aries: 'Mar 21 - Apr 19',
+                taurus: 'Apr 20 - May 20',
+                gemini: 'May 21 - Jun 20',
+                cancer: 'Jun 21 - Jul 22',
+                leo: 'Jul 23 - Aug 22',
+                virgo: 'Aug 23 - Sep 22',
+                libra: 'Sep 23 - Oct 22',
+                scorpio: 'Oct 23 - Nov 21',
+                sagittarius: 'Nov 22 - Dec 21',
+                capricorn: 'Dec 22 - Jan 19',
+                aquarius: 'Jan 20 - Feb 18',
+                pisces: 'Feb 19 - Mar 20'
+            };
+            return ranges[sign] || 'Apr 20 - May 20';
+        }
+
+        function updateLuckyDay() {
+            const select = document.getElementById('luckyDaySelect');
+            const luckyColorName = document.getElementById('luckyColorName');
+            const luckyColorBox = document.getElementById('luckyColorBox');
+            const luckyNumberDisplay = document.getElementById('luckyNumberDisplay');
+            
+            if (!select || !luckyColorName || !luckyColorBox || !luckyNumberDisplay) return;
+            
+            const sign = select.value;
+            if (!sign) return;
+            
+            const signName = sign.charAt(0).toUpperCase() + sign.slice(1);
+            
+            // Lucky numbers based on sign
+            const luckyNumbers = {
+                aries: [1, 9, 7],
+                taurus: [6, 4, 2],
+                gemini: [5, 3, 7],
+                cancer: [2, 7, 9],
+                leo: [1, 4, 6],
+                virgo: [5, 8, 3],
+                libra: [6, 9, 1],
+                scorpio: [8, 3, 7],
+                sagittarius: [3, 9, 5],
+                capricorn: [4, 8, 2],
+                aquarius: [7, 1, 4],
+                pisces: [3, 7, 9]
+            };
+            
             const colors = ['Red', 'Blue', 'Green', 'Yellow', 'Purple', 'Orange', 'Pink', 'Teal', 'Gold', 'Silver'];
-            const luckyNumber = Math.floor(Math.random() * 9) + 1;
             const luckyColor = colors[Math.floor(Math.random() * colors.length)];
             
             const colorMap = {
@@ -3321,148 +4038,220 @@
                 'Silver': '#c0c0c0'
             };
             
-            elements.luckyColorName.textContent = luckyColor;
-            elements.luckyColorBox.style.backgroundColor = colorMap[luckyColor];
-            elements.luckyNumberDisplay.textContent = luckyNumber;
+            const luckyNumber = luckyNumbers[sign] ? luckyNumbers[sign][Math.floor(Math.random() * luckyNumbers[sign].length)] : 7;
             
+            luckyColorName.textContent = luckyColor;
+            luckyColorBox.style.backgroundColor = colorMap[luckyColor];
+            luckyNumberDisplay.textContent = luckyNumber;
+            
+            // Update sign display
+            const signDisplay = document.querySelector('#luckyTab .lucky-sign');
+            if (signDisplay) {
+                signDisplay.innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">${getZodiacSymbol(sign)}</div>
+                        <div style="font-weight: 800; color: var(--primary-purple);">${signName}</div>
+                    </div>
+                `;
+            }
+        }
+
+        function generateLuckyPredictions() {
+            updateLuckyDay();
             showToast('New lucky predictions generated!');
         }
 
-        // Community Functions
-        function renderCitizens() {
-            // Create some demo citizens
-            const demoCitizens = [
-                { id: 1, name: 'Alex', initial: 'A', color: '#1368ce', online: true },
-                { id: 2, name: 'Jordan', initial: 'J', color: '#26890c', online: true },
-                { id: 3, name: 'Taylor', initial: 'T', color: '#ffa602', online: false },
-                { id: 4, name: 'Casey', initial: 'C', color: '#46178f', online: true },
-                { id: 5, name: 'Riley', initial: 'R', color: '#e21b3c', online: true }
+        function updateZodiacInfo() {
+            const zodiacSelect = document.getElementById('zodiacSelect');
+            const zodiacElement = document.getElementById('zodiacElement');
+            const zodiacPlanet = document.getElementById('zodiacPlanet');
+            const zodiacDescription = document.getElementById('zodiacDescription');
+            
+            if (!zodiacSelect || !zodiacElement || !zodiacPlanet || !zodiacDescription) return;
+            
+            const sign = zodiacSelect.value;
+            const zodiacInfo = AppState.zodiacData.signs[sign];
+            
+            if (zodiacInfo) {
+                zodiacElement.textContent = zodiacInfo.element;
+                zodiacPlanet.textContent = zodiacInfo.planet;
+                zodiacDescription.textContent = zodiacInfo.description;
+            }
+        }
+
+        // Profile Functions
+        function updateProfilePicture() {
+            const avatarElements = [
+                elements.profileAvatarLarge,
+                elements.userAvatarSidebar,
+                elements.mobileUserAvatar
             ];
             
-            elements.citizensList.innerHTML = demoCitizens.map(citizen => `
-                <div class="citizen-item" data-citizen-id="${citizen.id}">
-                    <div class="citizen-info">
-                        <div class="post-avatar" style="background-color: ${citizen.color}; width: 36px; height: 36px; font-size: 0.9rem;">
-                            ${citizen.initial}
-                        </div>
-                        <div>
-                            <div style="font-weight: 700;">${citizen.name}</div>
-                            <div class="citizen-status ${citizen.online ? 'citizen-online' : 'citizen-offline'}">
-                                ${citizen.online ? 'Online' : 'Offline'}
-                            </div>
-                        </div>
-                    </div>
-                    <button class="btn btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.8rem;">
-                        Message
-                    </button>
-                </div>
-            `).join('');
-            
-            // Add event listeners
-            elements.citizensList.addEventListener('click', (e) => {
-                const citizenItem = e.target.closest('.citizen-item');
-                if (!citizenItem) return;
-                
-                const citizenId = parseInt(citizenItem.getAttribute('data-citizen-id'));
-                const citizen = demoCitizens.find(c => c.id === citizenId);
-                if (citizen) {
-                    openChat(citizen);
-                    
-                    // On mobile, hide the sidebar after selecting a chat
-                    if (window.innerWidth < 768) {
-                        elements.chatSidebar.classList.add('hidden');
+            avatarElements.forEach(element => {
+                if (element && AppState.currentUser) {
+                    if (AppState.currentUser.profilePicture) {
+                        element.style.backgroundImage = `url(${AppState.currentUser.profilePicture})`;
+                        element.style.backgroundSize = 'cover';
+                        element.style.backgroundPosition = 'center';
+                        element.textContent = '';
+                    } else {
+                        element.style.backgroundImage = 'none';
+                        element.textContent = AppState.currentUser.displayName.charAt(0);
                     }
                 }
             });
         }
 
-        function openChat(citizen) {
-            elements.chatPartnerAvatar.textContent = citizen.initial;
-            elements.chatPartnerAvatar.style.backgroundColor = citizen.color;
-            elements.chatPartnerName.textContent = citizen.name;
-            elements.chatPartnerStatus.textContent = citizen.online ? 'Online' : 'Offline';
-            elements.chatPartnerStatus.style.color = citizen.online ? 'var(--accent-green)' : 'var(--gray-500)';
-            
-            // Load chat messages
-            loadChatMessages(citizen.id);
-        }
-
-        function loadChatMessages(citizenId) {
-            // Demo messages
-            const demoMessages = [
-                { id: 1, senderId: citizenId, text: 'Hello! Welcome to Mooderia!', timestamp: new Date(Date.now() - 3600000).toISOString() },
-                { id: 2, senderId: AppState.currentUser.id, text: 'Thank you! Excited to be here.', timestamp: new Date(Date.now() - 3500000).toISOString() },
-                { id: 3, senderId: citizenId, text: 'How are you finding the metropolis so far?', timestamp: new Date(Date.now() - 3400000).toISOString() },
-                { id: 4, senderId: AppState.currentUser.id, text: 'It\'s amazing! I love the community vibe.', timestamp: new Date(Date.now() - 3300000).toISOString() }
-            ];
-            
-            elements.chatMessages.innerHTML = demoMessages.map(msg => `
-                <div class="message ${msg.senderId === AppState.currentUser.id ? 'message-sent' : 'message-received'}">
-                    <div>${msg.text}</div>
-                    <div class="message-time">${formatTime(msg.timestamp)}</div>
-                </div>
-            `).join('');
-            
-            // Scroll to bottom
-            elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
-        }
-
-        function sendChatMessage() {
-            const message = elements.messageInput.value.trim();
-            if (!message) return;
-            
-            // Add message to chat
-            const messageElement = document.createElement('div');
-            messageElement.className = 'message message-sent';
-            messageElement.innerHTML = `
-                <div>${message}</div>
-                <div class="message-time">${formatTime(new Date().toISOString())}</div>
-            `;
-            
-            elements.chatMessages.appendChild(messageElement);
-            elements.messageInput.value = '';
-            
-            // Scroll to bottom
-            elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
-            
-            // Simulate reply after delay
-            setTimeout(() => {
-                const replies = [
-                    "That's interesting! Tell me more.",
-                    "I feel the same way sometimes.",
-                    "Thanks for sharing that with me.",
-                    "The metropolis has that effect on people!",
-                    "I'm glad you're enjoying your time here."
-                ];
-                
-                const randomReply = replies[Math.floor(Math.random() * replies.length)];
-                
-                const replyElement = document.createElement('div');
-                replyElement.className = 'message message-received';
-                replyElement.innerHTML = `
-                    <div>${randomReply}</div>
-                    <div class="message-time">${formatTime(new Date().toISOString())}</div>
-                `;
-                
-                elements.chatMessages.appendChild(replyElement);
-                elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
-            }, 1000 + Math.random() * 2000);
-        }
-
-        // Profile Functions
         function showEditProfileModal() {
             if (!AppState.currentUser) return;
             
-            elements.editDisplayName.value = AppState.currentUser.displayName;
-            elements.editUsername.value = AppState.currentUser.username.replace('@', '');
-            elements.editStatus.value = AppState.currentUser.status;
+            const modalContent = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 class="modal-title">Edit City ID</h3>
+                    <button class="btn btn-light" id="closeEditModal" style="padding: 0.5rem 1rem;">×</button>
+                </div>
+                
+                <div style="text-align: center; margin-bottom: 1.5rem;">
+                    <div class="profile-avatar-large" id="editProfileAvatar" style="margin: 0 auto; cursor: pointer; position: relative;">
+                        <input type="file" id="profilePictureUpload" accept="image/*" style="display: none;">
+                        ${AppState.currentUser.profilePicture ? 
+                            `<img src="${AppState.currentUser.profilePicture}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">` :
+                            AppState.currentUser.displayName.charAt(0)
+                        }
+                        <div style="position: absolute; bottom: 0; right: 0; background: var(--primary-purple); color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                    </div>
+                    <p style="color: var(--gray-500); margin-top: 0.5rem; font-size: 0.9rem;">Click to change profile picture</p>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="editDisplayName">Display Name</label>
+                    <input type="text" id="editDisplayName" class="form-control" placeholder="Enter your name" value="${AppState.currentUser.displayName}">
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="editUsername">Username</label>
+                    <input type="text" id="editUsername" class="form-control" placeholder="@username" value="${AppState.currentUser.username.replace('@', '')}">
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="citizenStatusSelect">Citizen Status</label>
+                    <select id="citizenStatusSelect" class="form-control">
+                        ${AppState.citizenStatuses.map(status => 
+                            `<option value="${status}" ${AppState.currentUser.status === status ? 'selected' : ''} ${status === 'Creator' && AppState.currentUser.email !== 'travismiguel014@gmail.com' ? 'disabled' : ''}>${status}</option>`
+                        ).join('')}
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label for="bannerColorPicker">Banner Color</label>
+                    <input type="color" id="bannerColorPicker" class="form-control" style="height: 40px; padding: 0;" value="${AppState.currentUser.bannerColor || '#46178f'}">
+                </div>
+                
+                <div style="display: flex; gap: 0.75rem;">
+                    <button class="btn btn-light" id="cancelEdit" style="flex: 1;">Cancel</button>
+                    <button class="btn btn-primary" id="saveProfile" style="flex: 1;">Save Changes</button>
+                </div>
+            `;
+            
+            elements.editProfileModal.querySelector('.modal-content').innerHTML = modalContent;
             elements.editProfileModal.classList.remove('hidden');
+            
+            // Add event listeners for the modal
+            setTimeout(() => {
+                const closeEditModal = document.getElementById('closeEditModal');
+                const cancelEdit = document.getElementById('cancelEdit');
+                const saveProfile = document.getElementById('saveProfile');
+                const editProfileAvatar = document.getElementById('editProfileAvatar');
+                const profilePictureUpload = document.getElementById('profilePictureUpload');
+                const bannerColorPicker = document.getElementById('bannerColorPicker');
+                const citizenStatusSelect = document.getElementById('citizenStatusSelect');
+                
+                if (closeEditModal) {
+                    closeEditModal.addEventListener('click', () => {
+                        elements.editProfileModal.classList.add('hidden');
+                    });
+                }
+                
+                if (cancelEdit) {
+                    cancelEdit.addEventListener('click', () => {
+                        elements.editProfileModal.classList.add('hidden');
+                    });
+                }
+                
+                if (saveProfile) {
+                    saveProfile.addEventListener('click', saveProfileChanges);
+                }
+                
+                if (editProfileAvatar) {
+                    editProfileAvatar.addEventListener('click', () => {
+                        profilePictureUpload.click();
+                    });
+                }
+                
+                if (profilePictureUpload) {
+                    profilePictureUpload.addEventListener('change', handleProfilePictureUpload);
+                }
+                
+                if (bannerColorPicker) {
+                    bannerColorPicker.addEventListener('input', (e) => {
+                        AppState.currentUser.bannerColor = e.target.value;
+                        if (elements.profileBanner) {
+                            elements.profileBanner.style.background = `linear-gradient(135deg, ${e.target.value}, ${darkenColor(e.target.value, 20)})`;
+                        }
+                    });
+                }
+                
+                if (citizenStatusSelect) {
+                    citizenStatusSelect.addEventListener('change', (e) => {
+                        // Check if user is trying to select Creator but is not the specific email
+                        if (e.target.value === 'Creator' && AppState.currentUser.email !== 'travismiguel014@gmail.com') {
+                            alert('Only the user with email travismiguel014@gmail.com can have Creator status!');
+                            e.target.value = AppState.currentUser.status;
+                        }
+                    });
+                }
+            }, 100);
+        }
+
+        function handleProfilePictureUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.startsWith('image/')) {
+                alert('Please upload an image file');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                AppState.currentUser.profilePicture = e.target.result;
+                updateProfilePicture();
+                
+                // Update the modal preview
+                const editProfileAvatar = document.getElementById('editProfileAvatar');
+                if (editProfileAvatar) {
+                    editProfileAvatar.innerHTML = `
+                        <img src="${e.target.result}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                        <div style="position: absolute; bottom: 0; right: 0; background: var(--primary-purple); color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                    `;
+                }
+                
+                showToast('Profile picture updated!');
+            };
+            reader.readAsDataURL(file);
         }
 
         function saveProfileChanges() {
-            const displayName = elements.editDisplayName.value.trim();
-            const username = elements.editUsername.value.trim();
-            const status = elements.editStatus.value.trim();
+            const editDisplayName = document.getElementById('editDisplayName');
+            const editUsername = document.getElementById('editUsername');
+            const citizenStatusSelect = document.getElementById('citizenStatusSelect');
+            
+            if (!editDisplayName || !editUsername || !citizenStatusSelect) return;
+            
+            const displayName = editDisplayName.value.trim();
+            const username = editUsername.value.trim();
+            const status = citizenStatusSelect.value;
             
             if (!displayName || !username || !status) {
                 alert('Please fill in all fields');
@@ -3493,6 +4282,279 @@
             showToast('Profile updated successfully!');
         }
 
+        function darkenColor(color, percent) {
+            const num = parseInt(color.replace('#', ''), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = (num >> 16) - amt;
+            const G = (num >> 8 & 0x00FF) - amt;
+            const B = (num & 0x0000FF) - amt;
+            
+            return '#' + (
+                0x1000000 +
+                (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+                (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+                (B < 255 ? B < 1 ? 0 : B : 255)
+            ).toString(16).slice(1);
+        }
+
+        // Dark Mode Function
+        function toggleDarkMode() {
+            if (elements.darkModeToggle.checked) {
+                document.body.classList.add('dark-mode');
+                localStorage.setItem('darkMode', 'true');
+            } else {
+                document.body.classList.remove('dark-mode');
+                localStorage.setItem('darkMode', 'false');
+            }
+        }
+
+        // Community Functions
+        function renderCitizens() {
+            // Filter out current user
+            const otherUsers = AppState.users.filter(user => user.id !== AppState.currentUser?.id);
+            
+            if (otherUsers.length === 0) {
+                elements.citizensList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-users"></i>
+                        <h3>No Other Citizens Online</h3>
+                        <p>Invite friends to join Mooderia!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            elements.citizensList.innerHTML = otherUsers.map(user => `
+                <div class="citizen-item" data-user-id="${user.id}">
+                    <div class="citizen-info">
+                        <div class="post-avatar" style="background-color: ${getColorFromName(user.displayName)}; ${user.profilePicture ? `background-image: url('${user.profilePicture}')` : ''}">
+                            ${user.profilePicture ? '' : user.displayName.charAt(0)}
+                        </div>
+                        <div>
+                            <div style="font-weight: 700;">${user.displayName}</div>
+                            <div class="citizen-status citizen-online">
+                                ${user.status}
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary start-chat-btn" style="padding: 0.25rem 0.75rem; font-size: 0.8rem;">
+                        Message
+                    </button>
+                </div>
+            `).join('');
+            
+            // Add event listeners for chat
+            document.querySelectorAll('.start-chat-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const citizenItem = e.target.closest('.citizen-item');
+                    const userId = parseInt(citizenItem.getAttribute('data-user-id'));
+                    const user = otherUsers.find(u => u.id === userId);
+                    if (user) {
+                        openChat(user);
+                        if (window.innerWidth < 768) {
+                            elements.chatSidebar.classList.add('hidden');
+                        }
+                    }
+                });
+            });
+        }
+
+        function openChat(user) {
+            // Create conversation if it doesn't exist
+            const conversationId = [AppState.currentUser.id, user.id].sort().join('-');
+            if (!AppState.conversations[conversationId]) {
+                AppState.conversations[conversationId] = {
+                    id: conversationId,
+                    participants: [AppState.currentUser.id, user.id],
+                    messages: [],
+                    lastActivity: new Date().toISOString()
+                };
+            }
+            
+            // Update chat header
+            if (user.profilePicture) {
+                elements.chatPartnerAvatar.innerHTML = `<img src="${user.profilePicture}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+                elements.chatPartnerAvatar.style.backgroundColor = 'transparent';
+            } else {
+                elements.chatPartnerAvatar.textContent = user.displayName.charAt(0);
+                elements.chatPartnerAvatar.style.backgroundColor = getColorFromName(user.displayName);
+            }
+            elements.chatPartnerName.textContent = user.displayName;
+            elements.chatPartnerStatus.textContent = 'Online';
+            elements.chatPartnerStatus.style.color = 'var(--accent-green)';
+            
+            // Load chat messages
+            loadChatMessages(conversationId);
+            
+            // Enable message input
+            elements.messageInput.disabled = false;
+            elements.messageInput.placeholder = `Message ${user.displayName}...`;
+            elements.sendMessage.disabled = false;
+            
+            // Store current chat
+            elements.chatMessages.dataset.conversationId = conversationId;
+        }
+
+        function loadChatMessages(conversationId) {
+            const conversation = AppState.conversations[conversationId];
+            
+            if (!conversation || conversation.messages.length === 0) {
+                elements.chatMessages.innerHTML = `
+                    <div class="empty-state" style="padding: 2rem;">
+                        <i class="fas fa-comments"></i>
+                        <h3>Start a Conversation</h3>
+                        <p>Say hello to your fellow citizen!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            elements.chatMessages.innerHTML = conversation.messages.map(msg => `
+                <div class="message ${msg.senderId === AppState.currentUser.id ? 'message-sent' : 'message-received'}">
+                    <div>${msg.text}</div>
+                    <div class="message-time">${formatTime(msg.timestamp)}</div>
+                </div>
+            `).join('');
+            
+            // Scroll to bottom
+            elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+        }
+
+        function sendChatMessage() {
+            const message = elements.messageInput.value.trim();
+            if (!message) return;
+            
+            const conversationId = elements.chatMessages.dataset.conversationId;
+            if (!conversationId) {
+                alert('Please select a conversation first');
+                return;
+            }
+            
+            const conversation = AppState.conversations[conversationId];
+            if (!conversation) return;
+            
+            // Add message
+            const newMessage = {
+                id: Date.now(),
+                senderId: AppState.currentUser.id,
+                text: message,
+                timestamp: new Date().toISOString()
+            };
+            
+            conversation.messages.push(newMessage);
+            conversation.lastActivity = new Date().toISOString();
+            
+            // Add to UI
+            const messageElement = document.createElement('div');
+            messageElement.className = 'message message-sent';
+            messageElement.innerHTML = `
+                <div>${message}</div>
+                <div class="message-time">${formatTime(newMessage.timestamp)}</div>
+            `;
+            
+            elements.chatMessages.appendChild(messageElement);
+            elements.messageInput.value = '';
+            
+            // Scroll to bottom
+            elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+            
+            // Simulate reply after delay (1-3 seconds)
+            setTimeout(() => {
+                const partnerId = conversation.participants.find(id => id !== AppState.currentUser.id);
+                const partner = AppState.users.find(u => u.id === partnerId);
+                if (!partner) return;
+                
+                const replies = [
+                    "That's interesting! Tell me more.",
+                    "I feel the same way sometimes.",
+                    "Thanks for sharing that with me.",
+                    "The metropolis has that effect on people!",
+                    "I'm glad you're enjoying your time here.",
+                    "How's your day going in Mooderia?",
+                    "Have you tried the Meditation Garden?",
+                    "What's your current mood today?"
+                ];
+                
+                const randomReply = replies[Math.floor(Math.random() * replies.length)];
+                
+                const replyMessage = {
+                    id: Date.now() + 1,
+                    senderId: partnerId,
+                    text: randomReply,
+                    timestamp: new Date().toISOString()
+                };
+                
+                conversation.messages.push(replyMessage);
+                
+                const replyElement = document.createElement('div');
+                replyElement.className = 'message message-received';
+                replyElement.innerHTML = `
+                    <div>${randomReply}</div>
+                    <div class="message-time">${formatTime(replyMessage.timestamp)}</div>
+                `;
+                
+                elements.chatMessages.appendChild(replyElement);
+                elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+                
+                // Add notification
+                AppState.notifications.community++;
+                updateNotificationBadges();
+                
+            }, 1000 + Math.random() * 2000);
+            
+            saveToLocalStorage();
+        }
+
+        // Notification Functions
+        function updateNotificationBadges() {
+            // Update mood notifications badge
+            const moodNavItems = [
+                ...document.querySelectorAll('[data-page="mood"]'),
+                ...document.querySelectorAll('.nav-link[data-page="mood"]')
+            ];
+            
+            const totalMoodNotifications = AppState.notifications.mood.likes + 
+                                          AppState.notifications.mood.comments + 
+                                          AppState.notifications.mood.reposts;
+            
+            moodNavItems.forEach(item => {
+                if (totalMoodNotifications > 0) {
+                    let badge = item.querySelector('.notification-badge');
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.className = 'notification-badge';
+                        item.appendChild(badge);
+                    }
+                    badge.textContent = totalMoodNotifications > 9 ? '9+' : totalMoodNotifications;
+                } else {
+                    const badge = item.querySelector('.notification-badge');
+                    if (badge) badge.remove();
+                }
+            });
+            
+            // Update community notifications badge
+            const communityNavItems = [
+                ...document.querySelectorAll('[data-page="community"]'),
+                ...document.querySelectorAll('.nav-link[data-page="community"]')
+            ];
+            
+            communityNavItems.forEach(item => {
+                if (AppState.notifications.community > 0) {
+                    let badge = item.querySelector('.notification-badge');
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.className = 'notification-badge';
+                        item.appendChild(badge);
+                    }
+                    badge.textContent = AppState.notifications.community > 9 ? '9+' : AppState.notifications.community;
+                } else {
+                    const badge = item.querySelector('.notification-badge');
+                    if (badge) badge.remove();
+                }
+            });
+        }
+
         // Navigation Functions
         function navigateTo(page) {
             // Hide all pages
@@ -3516,10 +4578,12 @@
                         break;
                     case 'mood':
                         renderPosts();
+                        // Clear mood notifications when viewing mood page
+                        AppState.notifications.mood = { likes: 0, comments: 0, reposts: 0 };
+                        updateNotificationBadges();
                         break;
                     case 'zodiac':
-                        updateZodiacInfo();
-                        generateLuckyPredictions();
+                        updateZodiacPage();
                         break;
                     case 'community':
                         renderCitizens();
@@ -3531,6 +4595,10 @@
                     case 'profile':
                         renderUserPosts();
                         updateProfileStats();
+                        // Update banner color
+                        if (elements.profileBanner && AppState.currentUser?.bannerColor) {
+                            elements.profileBanner.style.background = `linear-gradient(135deg, ${AppState.currentUser.bannerColor}, ${darkenColor(AppState.currentUser.bannerColor, 20)})`;
+                        }
                         break;
                 }
             }
@@ -3571,8 +4639,8 @@
                     renderPosts();
                 } else if (tabName === 'quiz') {
                     restartQuiz();
-                } else if (tabName === 'meditation') {
-                    resetMeditationTimer();
+                } else if (tabName === 'pet') {
+                    updateMoodPet();
                 }
             }
         }
@@ -3623,8 +4691,8 @@
                 postElement.className = 'card post-card';
                 postElement.innerHTML = `
                     <div class="post-header">
-                        <div class="post-avatar" style="background-color: ${getColorFromName(post.userName)};">
-                            ${post.userInitial}
+                        <div class="post-avatar" style="background-color: ${getColorFromName(post.userName)}; ${post.userProfilePicture ? `background-image: url('${post.userProfilePicture}')` : ''}">
+                            ${post.userProfilePicture ? '' : post.userInitial}
                         </div>
                         <div class="post-user-info">
                             <div class="post-user-name">${post.userName}</div>
@@ -3712,44 +4780,6 @@
         }
 
         function setupDefaultData() {
-            // Create some demo posts if none exist
-            if (AppState.posts.length === 0) {
-                AppState.posts = [
-                    {
-                        id: 1,
-                        userId: 999,
-                        userName: 'Alex',
-                        userInitial: 'A',
-                        content: 'Just discovered the Meditation Garden. Feeling so centered and peaceful! 🌿',
-                        timestamp: new Date(Date.now() - 7200000).toISOString(),
-                        likes: 12,
-                        comments: [
-                            {
-                                id: 1,
-                                userId: 888,
-                                userName: 'Jordan',
-                                text: 'Same here! It\'s my favorite spot in the metropolis.',
-                                timestamp: new Date(Date.now() - 7000000).toISOString()
-                            }
-                        ],
-                        reposts: 3,
-                        likedByUser: false
-                    },
-                    {
-                        id: 2,
-                        userId: 888,
-                        userName: 'Jordan',
-                        userInitial: 'J',
-                        content: 'My horoscope was spot on today! The Love Matcher predicted 92% compatibility with my partner! ✨',
-                        timestamp: new Date(Date.now() - 3600000).toISOString(),
-                        likes: 24,
-                        comments: [],
-                        reposts: 5,
-                        likedByUser: false
-                    }
-                ];
-            }
-            
             // Create demo users if none exist
             if (AppState.users.length === 0) {
                 AppState.users = [
@@ -3760,6 +4790,8 @@
                         email: 'alex@example.com',
                         password: 'demo123',
                         status: 'Influencer',
+                        profilePicture: null,
+                        bannerColor: '#1368ce',
                         mood: 'happy',
                         lastMoodDate: new Date().toISOString(),
                         streak: 7,
@@ -3775,6 +4807,8 @@
                         email: 'jordan@example.com',
                         password: 'demo123',
                         status: 'Creator',
+                        profilePicture: null,
+                        bannerColor: '#26890c',
                         mood: 'happy',
                         lastMoodDate: new Date().toISOString(),
                         streak: 14,
@@ -3782,8 +4816,95 @@
                         following: 156,
                         posts: 28,
                         createdAt: new Date(Date.now() - 86400000 * 45).toISOString()
+                    },
+                    {
+                        id: 777,
+                        displayName: 'Taylor',
+                        username: '@taylor',
+                        email: 'taylor@example.com',
+                        password: 'demo123',
+                        status: 'Artist',
+                        profilePicture: null,
+                        bannerColor: '#ffa602',
+                        mood: 'happy',
+                        lastMoodDate: new Date().toISOString(),
+                        streak: 3,
+                        followers: 89,
+                        following: 145,
+                        posts: 15,
+                        createdAt: new Date(Date.now() - 86400000 * 10).toISOString()
                     }
                 ];
+            }
+            
+            // Create some demo posts if none exist
+            if (AppState.posts.length === 0) {
+                AppState.posts = [
+                    {
+                        id: 1,
+                        userId: 999,
+                        userName: 'Alex',
+                        userInitial: 'A',
+                        userProfilePicture: null,
+                        content: 'Just discovered the Meditation Garden. Feeling so centered and peaceful! 🌿',
+                        timestamp: new Date(Date.now() - 7200000).toISOString(),
+                        likes: 12,
+                        likedBy: [],
+                        comments: [
+                            {
+                                id: 1,
+                                userId: 888,
+                                userName: 'Jordan',
+                                text: 'Same here! It\'s my favorite spot in the metropolis.',
+                                timestamp: new Date(Date.now() - 7000000).toISOString(),
+                                replies: []
+                            }
+                        ],
+                        reposts: 3,
+                        likedByUser: false,
+                        isAutoPost: false
+                    },
+                    {
+                        id: 2,
+                        userId: 888,
+                        userName: 'Jordan',
+                        userInitial: 'J',
+                        userProfilePicture: null,
+                        content: 'My horoscope was spot on today! The Love Matcher predicted 92% compatibility with my partner! ✨',
+                        timestamp: new Date(Date.now() - 3600000).toISOString(),
+                        likes: 24,
+                        likedBy: [],
+                        comments: [],
+                        reposts: 5,
+                        likedByUser: false,
+                        isAutoPost: false
+                    }
+                ];
+            }
+            
+            // Create demo conversations
+            if (Object.keys(AppState.conversations).length === 0) {
+                AppState.conversations = {
+                    '777-888': {
+                        id: '777-888',
+                        participants: [777, 888],
+                        messages: [
+                            {
+                                id: 1,
+                                senderId: 777,
+                                text: 'Hey Jordan! How are you enjoying Mooderia?',
+                                timestamp: new Date(Date.now() - 86400000).toISOString()
+                            },
+                            {
+                                id: 2,
+                                senderId: 888,
+                                text: 'It\'s amazing! I love the community vibe here.',
+                                timestamp: new Date(Date.now() - 86300000).toISOString()
+                            }
+                        ],
+                        lastActivity: new Date(Date.now() - 86300000).toISOString()
+                    }
+                };
             }
         }
 
@@ -3791,6 +4912,8 @@
         function saveToLocalStorage() {
             localStorage.setItem('mooderiaUsers', JSON.stringify(AppState.users));
             localStorage.setItem('mooderiaPosts', JSON.stringify(AppState.posts));
+            localStorage.setItem('mooderiaConversations', JSON.stringify(AppState.conversations));
+            localStorage.setItem('mooderiaPet', JSON.stringify(AppState.moodPet));
             if (AppState.currentUser) {
                 localStorage.setItem('currentUser', JSON.stringify(AppState.currentUser));
             }
@@ -3799,6 +4922,9 @@
         function loadFromLocalStorage() {
             const users = localStorage.getItem('mooderiaUsers');
             const posts = localStorage.getItem('mooderiaPosts');
+            const conversations = localStorage.getItem('mooderiaConversations');
+            const pet = localStorage.getItem('mooderiaPet');
+            const darkMode = localStorage.getItem('darkMode');
             
             if (users) {
                 AppState.users = JSON.parse(users);
@@ -3806,6 +4932,19 @@
             
             if (posts) {
                 AppState.posts = JSON.parse(posts);
+            }
+            
+            if (conversations) {
+                AppState.conversations = JSON.parse(conversations);
+            }
+            
+            if (pet) {
+                AppState.moodPet = JSON.parse(pet);
+            }
+            
+            if (darkMode === 'true') {
+                document.body.classList.add('dark-mode');
+                elements.darkModeToggle.checked = true;
             }
         }
 
