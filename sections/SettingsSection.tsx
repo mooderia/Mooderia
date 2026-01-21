@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LogOut, Moon, Sun, UserMinus, ShieldAlert, Cpu, Database, AlertCircle } from 'lucide-react';
+import { LogOut, Moon, Sun, UserMinus, ShieldAlert } from 'lucide-react';
 import { User } from '../types';
 
 interface SettingsSectionProps {
@@ -40,31 +40,6 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
           >
             <div className={`w-6 h-6 bg-white rounded-full shadow-md transition-transform ${isDarkMode ? 'translate-x-6' : 'translate-x-0'}`}></div>
           </button>
-        </div>
-
-        {/* City Infrastructure / Limits Info */}
-        <div className="p-6 bg-blue-50 dark:bg-slate-700 rounded-2xl border-2 border-blue-200 dark:border-slate-600">
-          <div className="flex items-center gap-3 mb-4 text-[#1368ce] dark:text-blue-400">
-            <Cpu size={24} />
-            <h3 className="font-black italic uppercase">Metropolis Resources</h3>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <AlertCircle size={18} className="text-blue-500 shrink-0 mt-1" />
-              <div>
-                <p className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>AI Request Quota</p>
-                <p className="text-xs opacity-60 font-semibold">Gemini 3 Flash/Pro (Free Tier): Up to 1,500 requests per day city-wide. Exceeding this may cause AI characters to stop responding temporarily.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <Database size={18} className="text-blue-500 shrink-0 mt-1" />
-              <div>
-                <p className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Citizen Memory</p>
-                <p className="text-xs opacity-60 font-semibold">Mooderia uses Browser LocalStorage (5MB limit). Deleting your browser cache will erase all posts and profile data.</p>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Blocked Accounts Section */}

@@ -38,19 +38,45 @@
         filter: drop-shadow(0 0 8px rgba(255, 166, 2, 0.6));
       }
 
-      /* Custom Scrollbar for inner containers */
-      .custom-scrollbar::-webkit-scrollbar {
+      /* Fading Scrollbar Logic */
+      .fading-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: transparent transparent;
+        transition: scrollbar-color 0.3s;
+      }
+      .fading-scrollbar:hover {
+        scrollbar-color: #cbd5e1 transparent;
+      }
+      .dark .fading-scrollbar:hover {
+        scrollbar-color: #475569 transparent;
+      }
+
+      .fading-scrollbar::-webkit-scrollbar {
         width: 6px;
       }
-      .custom-scrollbar::-webkit-scrollbar-track {
+      .fading-scrollbar::-webkit-scrollbar-track {
         background: transparent;
       }
-      .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
+      .fading-scrollbar::-webkit-scrollbar-thumb {
+        background: transparent;
         border-radius: 10px;
+        transition: background 0.3s;
       }
-      .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+      .fading-scrollbar:hover::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+      }
+      .dark .fading-scrollbar:hover::-webkit-scrollbar-thumb {
         background: #475569;
+      }
+
+      /* Mobile centering and container containment */
+      @media (max-width: 768px) {
+        .mobile-center {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+        }
       }
 
       /* Utility to hide horizontal scroll on mobile */
@@ -75,9 +101,11 @@
   }
 }
 </script>
+<link rel="stylesheet" href="/index.css">
 </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+    <script type="module" src="index.tsx"></script>
+  <script type="module" src="/index.tsx"></script>
 </body>
 </html>

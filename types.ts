@@ -1,5 +1,5 @@
 
-export type Mood = 'Happy' | 'Sad' | 'Angry' | 'Tired' | null;
+export type Mood = 'Wonderful' | 'Excited' | 'Happy' | 'Normal' | 'Tired' | 'Angry' | 'Flaming' | null;
 
 export interface Badge {
   id: string;
@@ -14,43 +14,63 @@ export interface User {
   username: string;
   email: string;
   password?: string;
+  bio?: string;
   followers: string[];
   following: string[];
   friends: string[];
   blockedUsers: string[];
   posts: Post[];
   reposts: Post[];
-  moodHistory: { date: string, mood: Mood }[];
+  moodHistory: { date: string, mood: Mood, score: number }[];
   moodStreak: number;
   lastMoodDate?: string;
   profilePic?: string;
   bannerPic?: string;
   profileColor?: string;
   title?: string;
+  likesReceived: number;
   // Mood Pet Stats
+  petName: string;
   moodCoins: number;
   petEmoji: string;
   petHunger: number; // 0-100
   petThirst: number; // 0-100
   petRest: number;   // 0-100
+  petLevel: number;
+  petExp: number;
+  petHasBeenChosen: boolean;
   petLastUpdate: number; // timestamp
   petSleepUntil: number | null; // timestamp
+  gameCooldowns: Record<string, number>; // gameId -> timestamp of when it can be played again
+}
+
+export interface MessageReaction {
+  emoji: string;
+  users: string[]; // List of usernames who used this emoji
 }
 
 export interface Message {
   id: string;
   sender: string;
-  recipient: string;
+  recipient: string; // For DMs, this is the username. For Groups, this is the groupId.
   text: string;
   timestamp: number;
   read: boolean;
+  reactions?: MessageReaction[];
+  isGroup?: boolean;
+  recipients?: string[]; // List of all usernames in the group (if group chat)
+  groupName?: string;
+  replyToId?: string;
+  replyToText?: string;
+  replyToSender?: string;
 }
 
 export interface Notification {
   id: string;
-  type: 'heart' | 'comment' | 'repost';
+  type: 'heart' | 'comment' | 'repost' | 'tier' | 'achievement' | 'follow' | 'comment_heart' | 'reply' | 'reaction';
   fromUser: string;
-  postId: string;
+  recipient: string; 
+  postId?: string;
   timestamp: number;
   read: boolean;
   postContentSnippet: string;
@@ -65,12 +85,15 @@ export interface Post {
   timestamp: number;
   isRepost?: boolean;
   originalAuthor?: string;
+  visibility: 'global' | 'circle';
 }
 
 export interface Comment {
   id: string;
   author: string;
   text: string;
+  hearts: number;
+  timestamp: number;
   replies: Comment[];
 }
 

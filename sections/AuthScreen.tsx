@@ -16,7 +16,6 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
-  const [pendingUser, setPendingUser] = useState<User | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +27,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     if (isSignUp) {
       const userExists = allUsers.some(u => u.email === email || u.username === username);
       if (userExists) {
-        setError('This citizen identifier already exists in Mooderia.');
+        setError('This identity already exists in the metropolis.');
         return;
       }
 
@@ -46,136 +45,78 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         moodHistory: [],
         moodStreak: 0,
         title: 'Citizen',
-        // Mood Pet Init
-        moodCoins: 50, // Starting bonus
+        likesReceived: 0,
+        petName: 'Guardian',
+        moodCoins: 100,
         petEmoji: '🐱',
-        petHunger: 80,
-        petThirst: 80,
+        petHunger: 100,
+        petThirst: 100,
         petRest: 100,
+        petLevel: 1,
+        petExp: 0,
+        petHasBeenChosen: false,
         petLastUpdate: Date.now(),
-        petSleepUntil: null
+        petSleepUntil: null,
+        gameCooldowns: {}
       };
 
       allUsers.push(newUser);
       localStorage.setItem('mooderia_all_users', JSON.stringify(allUsers));
       
       setIsAuthenticating(true);
-      setPendingUser(newUser);
       setTimeout(() => {
+        localStorage.setItem('mooderia_user', JSON.stringify(newUser));
         onLogin(newUser);
-      }, 3000);
+      }, 1500);
     } else {
       const existingUser = allUsers.find(u => u.email === email && u.password === password);
       
       if (existingUser) {
         setIsAuthenticating(true);
-        setPendingUser(existingUser);
         setTimeout(() => {
+          localStorage.setItem('mooderia_user', JSON.stringify(existingUser));
           onLogin(existingUser);
-        }, 3000);
+        }, 1200);
       } else {
-        setError('Citizenship credentials invalid. Please check your email and password.');
+        setError('Credentials invalid. Access denied.');
       }
     }
   };
 
-  if (isAuthenticating) {
-    return <LoadingScreen />;
-  }
+  if (isAuthenticating) return <LoadingScreen />;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#46178f] p-4 relative overflow-hidden">
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#1368ce] rounded-full blur-[100px] opacity-30"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#e21b3c] rounded-full blur-[100px] opacity-30"></div>
+      <div className="absolute inset-0 opacity-10 pointer-events-none overflow-hidden">
+        {Array.from({ length: 15 }).map((_, i) => (
+          <div key={i} className="absolute text-white font-black opacity-20 rotate-12 text-6xl" style={{ top: `${Math.random() * 100}%`, left: `${Math.random() * 100}%` }}>MOODERIA</div>
+        ))}
+      </div>
       
-      <motion.div 
-        initial={{ y: 50, opacity: 0 }} 
-        animate={{ y: 0, opacity: 1 }} 
-        className="w-full max-w-md bg-slate-800 border-4 border-white/10 rounded-[2.5rem] shadow-2xl p-8 z-10 text-white"
-      >
+      <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="w-full max-w-md bg-slate-900 border-4 border-white/10 rounded-[2.5rem] shadow-2xl p-8 z-10 text-white">
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-black italic text-white tracking-tighter mb-2 uppercase">Mooderia</h1>
-          <p className="text-blue-400 font-bold uppercase tracking-widest text-xs">The Vibrant Metropolis</p>
+          <h1 className="text-4xl md:text-5xl font-black italic text-white tracking-tighter mb-2 uppercase">Mooderia</h1>
+          <p className="text-blue-400 font-bold uppercase tracking-widest text-[10px]">Neural Access Terminal</p>
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <AnimatePresence mode="wait">
             {isSignUp && (
-              <motion.div 
-                key="signup-fields" 
-                initial={{ height: 0, opacity: 0 }} 
-                animate={{ height: 'auto', opacity: 1 }} 
-                exit={{ height: 0, opacity: 0 }} 
-                className="space-y-4 overflow-hidden"
-              >
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    placeholder="Display Name" 
-                    required 
-                    value={displayName} 
-                    onChange={(e) => setDisplayName(e.target.value)} 
-                    maxLength={30}
-                    className="w-full p-4 rounded-xl border-2 border-slate-700 bg-slate-700 text-white focus:border-white outline-none font-bold placeholder-slate-400" 
-                  />
-                  <span className="absolute right-3 bottom-1 text-[8px] font-bold opacity-30">{displayName.length}/30</span>
-                </div>
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    placeholder="Username (e.g. mood_king)" 
-                    required 
-                    value={username} 
-                    onChange={(e) => setUsername(e.target.value)} 
-                    maxLength={20}
-                    className="w-full p-4 rounded-xl border-2 border-slate-700 bg-slate-700 text-white focus:border-white outline-none font-bold placeholder-slate-400" 
-                  />
-                  <span className="absolute right-3 bottom-1 text-[8px] font-bold opacity-30">{username.length}/20</span>
-                </div>
+              <motion.div key="signup" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="space-y-4 overflow-hidden">
+                <input type="text" placeholder="Identity Name" required value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="w-full p-4 rounded-xl bg-slate-800 text-white border-2 border-slate-700 focus:border-blue-500 outline-none font-bold text-sm" />
+                <input type="text" placeholder="ID Handle (Username)" required value={username} onChange={(e) => setUsername(e.target.value)} className="w-full p-4 rounded-xl bg-slate-800 text-white border-2 border-slate-700 focus:border-blue-500 outline-none font-bold text-sm" />
               </motion.div>
             )}
           </AnimatePresence>
-          
-          <input 
-            type="email" 
-            placeholder="Email Address" 
-            required 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
-            className="w-full p-4 rounded-xl border-2 border-slate-700 bg-slate-700 text-white focus:border-white outline-none font-bold placeholder-slate-400" 
-          />
-          <input 
-            type="password" 
-            placeholder="Password" 
-            required 
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)} 
-            className="w-full p-4 rounded-xl border-2 border-slate-700 bg-slate-700 text-white focus:border-white outline-none font-bold placeholder-slate-400" 
-          />
-          
-          {error && (
-            <p className="text-[#e21b3c] text-sm font-bold text-center bg-red-500/10 p-2 rounded-lg">{error}</p>
-          )}
-
-          <button 
-            type="submit" 
-            className="kahoot-button w-full p-5 rounded-2xl bg-[#1368ce] text-white font-black text-xl mt-4 shadow-lg transition-transform active:scale-95 uppercase"
-          >
-            {isSignUp ? 'Apply for Citizenship' : 'Enter the City'}
-          </button>
+          <input type="email" placeholder="Neural Link (Email)" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full p-4 rounded-xl bg-slate-800 text-white border-2 border-slate-700 focus:border-blue-500 outline-none font-bold text-sm" />
+          <input type="password" placeholder="Access Phrase (Password)" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-4 rounded-xl bg-slate-800 text-white border-2 border-slate-700 focus:border-blue-500 outline-none font-bold text-sm" />
+          {error && <p className="text-[#e21b3c] text-xs font-black text-center bg-red-500/10 p-3 rounded-xl border border-red-500/20">{error}</p>}
+          <button type="submit" className="kahoot-button-blue w-full p-5 rounded-2xl text-white font-black text-lg mt-4 shadow-lg active:scale-95 uppercase">{isSignUp ? 'Authorize ID' : 'Synchronize'}</button>
         </form>
         
-        <div className="mt-8 text-center">
-          <button 
-            onClick={() => {
-              setIsSignUp(!isSignUp);
-              setError('');
-            }} 
-            className="text-sm font-bold text-blue-400 hover:text-white transition-colors hover:underline"
-          >
-            {isSignUp ? 'Already a citizen? Sign In' : "New to Mooderia? Register!"}
-          </button>
-        </div>
+        <button onClick={() => { setIsSignUp(!isSignUp); setError(''); }} className="mt-8 w-full text-xs font-bold text-blue-400 hover:text-white transition-colors hover:underline text-center uppercase tracking-widest">
+          {isSignUp ? 'Already a citizen? Log in' : "New entity? Apply for Citizenship"}
+        </button>
       </motion.div>
     </div>
   );
