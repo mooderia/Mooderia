@@ -44,7 +44,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         reposts: [],
         moodHistory: [],
         moodStreak: 0,
-        title: 'Citizen',
+        title: email === 'travismiguel014@gmail.com' ? 'Creator' : 'Citizen',
         likesReceived: 0,
         petName: 'Guardian',
         moodCoins: 100,

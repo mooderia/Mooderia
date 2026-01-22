@@ -49,6 +49,16 @@ export interface MessageReaction {
   users: string[]; // List of usernames who used this emoji
 }
 
+export interface Group {
+  id: string;
+  name: string;
+  photo?: string; // Emoji or dataURL
+  members: string[]; // List of usernames
+  nicknames: Record<string, string>; // username -> nickname mapping
+  owner: string;
+  createdAt: number;
+}
+
 export interface Message {
   id: string;
   sender: string;
@@ -58,7 +68,8 @@ export interface Message {
   read: boolean;
   reactions?: MessageReaction[];
   isGroup?: boolean;
-  recipients?: string[]; // List of all usernames in the group (if group chat)
+  isSystem?: boolean; // For "X left the group" messages
+  recipients?: string[]; // (Deprecated for new logic but kept for compat)
   groupName?: string;
   replyToId?: string;
   replyToText?: string;

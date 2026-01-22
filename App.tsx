@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Mood, Section, Post, Comment, Message, Notification, MessageReaction } from './types';
+import { User, Mood, Section, Post, Comment, Message, Notification, MessageReaction, Group } from './types';
 import Sidebar from './components/Sidebar';
 import MoodCheckIn from './components/MoodCheckIn';
 import HomeSection from './sections/HomeSection';
@@ -27,20 +27,24 @@ const App: React.FC = () => {
   
   const [allPosts, setAllPosts] = useState<Post[]>([]);
   const [allMessages, setAllMessages] = useState<Message[]>([]);
+  const [allGroups, setAllGroups] = useState<Group[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
+  // Computed value to get the currently viewed profile
   const profileToView = useMemo(() => {
     if (!viewingUsername) return null;
     if (currentUser && viewingUsername === currentUser.username) return currentUser;
     const allUsers: User[] = JSON.parse(localStorage.getItem('mooderia_all_users') || '[]');
     return allUsers.find(u => u.username === viewingUsername) || null;
-  }, [viewingUsername, currentUser, globalUpdateToggle]);
+  }, [viewingUsername, currentUser, globalUpdateToggle, allPosts]);
 
+  // Unified Notification system
   const addNotification = useCallback((recipient: string, type: Notification['type'], snippet: string, postId: string = '') => {
-    if (!currentUser || recipient === currentUser.username) {
-      if (type !== 'achievement' && type !== 'tier') return;
-    }
+    if (!currentUser) return;
+    // Don't notify self for basic social interactions, but allow achievements
+    if (recipient === currentUser.username && type !== 'achievement' && type !== 'tier') return;
+    
     const newNotif: Notification = {
       id: Math.random().toString(36).substr(2, 9),
       fromUser: currentUser?.username || 'Metropolis',
@@ -54,22 +58,36 @@ const App: React.FC = () => {
     setNotifications(prev => [...prev, newNotif]);
   }, [currentUser]);
 
+  // Initial Data Restoration
   useEffect(() => {
     const savedUser = localStorage.getItem('mooderia_user');
     const savedPosts = localStorage.getItem('mooderia_posts') || '[]';
     const savedMessages = localStorage.getItem('mooderia_messages') || '[]';
+    const savedGroups = localStorage.getItem('mooderia_groups') || '[]';
     const savedNotifications = localStorage.getItem('mooderia_notifications') || '[]';
     const savedTheme = localStorage.getItem('mooderia_theme');
     
     if (savedUser) {
       const user: User = JSON.parse(savedUser);
       const now = Date.now();
-      const elapsedMinutes = Math.floor((now - (user.petLastUpdate || now)) / 60000);
+
+      // Creator Protection Patch
+      if (user.email === 'travismiguel014@gmail.com') {
+        user.title = 'Creator';
+      }
+      
+      // Pet survival logic based on time elapsed since last seen
+      const lastUpdate = user.petLastUpdate || now;
+      const elapsedMinutes = Math.floor((now - lastUpdate) / 60000);
+      
       if (elapsedMinutes > 0) {
         user.petHunger = Math.max(0, user.petHunger - elapsedMinutes * 0.15);
         user.petThirst = Math.max(0, user.petThirst - elapsedMinutes * 0.2);
+        
+        // If the pet isn't in stasis (sleeping), it loses rest
         if (!user.petSleepUntil || user.petSleepUntil < now) {
           user.petRest = Math.max(0, user.petRest - elapsedMinutes * 0.1);
+          user.petSleepUntil = null;
         }
         user.petLastUpdate = now;
       }
@@ -78,6 +96,7 @@ const App: React.FC = () => {
 
     setAllPosts(JSON.parse(savedPosts));
     setAllMessages(JSON.parse(savedMessages));
+    setAllGroups(JSON.parse(savedGroups));
     setNotifications(JSON.parse(savedNotifications));
     if (savedTheme === 'dark') setIsDarkMode(true);
     setIsLoaded(true);
@@ -86,6 +105,7 @@ const App: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Mood Modal Trigger logic
   useEffect(() => {
     if (!isAppStarting && currentUser) {
       const todayStr = new Date().toDateString();
@@ -95,46 +115,59 @@ const App: React.FC = () => {
     }
   }, [isAppStarting, currentUser?.username, currentUser?.lastMoodDate]);
 
-  // Master Sync Effect: Persist all state changes to LocalStorage
+  // MASTER SYNC ENGINE: Persists ALL application state to LocalStorage
   useEffect(() => {
     if (!isLoaded) return;
+    
     if (currentUser) {
       localStorage.setItem('mooderia_user', JSON.stringify(currentUser));
+      
       const allUsers: User[] = JSON.parse(localStorage.getItem('mooderia_all_users') || '[]');
       const idx = allUsers.findIndex(u => u.username === currentUser.username);
       if (idx > -1) {
         allUsers[idx] = currentUser;
-        localStorage.setItem('mooderia_all_users', JSON.stringify(allUsers));
+      } else {
+        allUsers.push(currentUser);
       }
+      localStorage.setItem('mooderia_all_users', JSON.stringify(allUsers));
     }
+    
     localStorage.setItem('mooderia_posts', JSON.stringify(allPosts));
     localStorage.setItem('mooderia_messages', JSON.stringify(allMessages));
+    localStorage.setItem('mooderia_groups', JSON.stringify(allGroups));
     localStorage.setItem('mooderia_notifications', JSON.stringify(notifications));
     localStorage.setItem('mooderia_theme', isDarkMode ? 'dark' : 'light');
-  }, [currentUser, allPosts, allMessages, notifications, isDarkMode, isLoaded]);
+    
+    setGlobalUpdateToggle(t => t + 1);
+  }, [currentUser, allPosts, allMessages, allGroups, notifications, isDarkMode, isLoaded]);
 
   const handleFollow = (targetUsername: string) => {
     if (!currentUser) return;
     const isFollowing = currentUser.following.includes(targetUsername);
-    const updatedFollowing = isFollowing ? currentUser.following.filter(u => u !== targetUsername) : [...currentUser.following, targetUsername];
+    const updatedFollowing = isFollowing 
+      ? currentUser.following.filter(u => u !== targetUsername) 
+      : [...currentUser.following, targetUsername];
+      
     setCurrentUser({ ...currentUser, following: updatedFollowing });
+    
     const allUsers: User[] = JSON.parse(localStorage.getItem('mooderia_all_users') || '[]');
     const targetIdx = allUsers.findIndex(u => u.username === targetUsername);
     if (targetIdx > -1) {
       const targetUser = { ...allUsers[targetIdx] };
-      targetUser.followers = isFollowing ? targetUser.followers.filter(u => u !== currentUser.username) : [...targetUser.followers, currentUser.username];
+      targetUser.followers = isFollowing 
+        ? targetUser.followers.filter(u => u !== currentUser.username) 
+        : [...targetUser.followers, currentUser.username];
       allUsers[targetIdx] = targetUser;
       localStorage.setItem('mooderia_all_users', JSON.stringify(allUsers));
-      if (!isFollowing) addNotification(targetUsername, 'follow', 'started following you!');
+      if (!isFollowing) addNotification(targetUsername, 'follow', 'started following your frequency!');
     }
-    setGlobalUpdateToggle(t => t + 1);
   };
 
   const handleHeart = (postId: string) => {
     if (!currentUser) return;
     setAllPosts(prev => prev.map(p => {
       if (p.id === postId) {
-        if (p.author !== currentUser.username) addNotification(p.author, 'heart', 'liked your expression', p.id);
+        if (p.author !== currentUser.username) addNotification(p.author, 'heart', 'liked your transmission', p.id);
         return { ...p, hearts: p.hearts + 1 };
       }
       return p;
@@ -197,6 +230,7 @@ const App: React.FC = () => {
     const updatedFollowing = currentUser.following.filter(u => u !== targetUsername);
     const updatedBlocked = [...currentUser.blockedUsers, targetUsername];
     setCurrentUser({ ...currentUser, following: updatedFollowing, blockedUsers: updatedBlocked });
+    
     const allUsers: User[] = JSON.parse(localStorage.getItem('mooderia_all_users') || '[]');
     const targetIdx = allUsers.findIndex(u => u.username === targetUsername);
     if (targetIdx > -1) {
@@ -204,13 +238,14 @@ const App: React.FC = () => {
       targetUser.followers = targetUser.followers.filter(u => u !== currentUser.username);
       targetUser.following = targetUser.following.filter(u => u !== currentUser.username);
       allUsers[targetIdx] = targetUser;
+      
       const currentIdxGlobal = allUsers.findIndex(u => u.username === currentUser.username);
       if (currentIdxGlobal > -1) allUsers[currentIdxGlobal].followers = allUsers[currentIdxGlobal].followers.filter(u => u !== targetUsername);
+      
       localStorage.setItem('mooderia_all_users', JSON.stringify(allUsers));
     }
     setViewingUsername(currentUser.username);
     setActiveSection('Home');
-    setGlobalUpdateToggle(t => t + 1);
   };
 
   const updatePetStats = (hunger: number, thirst: number, rest: number, coins: number, exp: number = 0, sleepUntil: number | null = null, newEmoji?: string, markChosen?: boolean, newName?: string, gameCooldownId?: string) => {
@@ -218,8 +253,15 @@ const App: React.FC = () => {
     let newLevel = currentUser.petLevel;
     let newExp = currentUser.petExp + exp;
     let leveledUp = false;
-    while (newExp >= getExpNeeded(newLevel)) { newExp -= getExpNeeded(newLevel); newLevel += 1; leveledUp = true; }
-    if (leveledUp) addNotification(currentUser.username, 'achievement', `Your Guardian ${newName || currentUser.petName} reached Level ${newLevel}!`);
+    
+    while (newExp >= getExpNeeded(newLevel)) { 
+      newExp -= getExpNeeded(newLevel); 
+      newLevel += 1; 
+      leveledUp = true; 
+    }
+    
+    if (leveledUp) addNotification(currentUser.username, 'achievement', `Your Guardian ${newName || currentUser.petName} reached Rank ${newLevel}!`);
+    
     setCurrentUser({
       ...currentUser,
       petName: newName || currentUser.petName,
@@ -273,7 +315,7 @@ const App: React.FC = () => {
     setViewingUsername(user.username);
   };
 
-  const handleSendMessage = (recipient: string, text: string, options?: { isGroup?: boolean, recipients?: string[], groupName?: string, replyToId?: string, replyToText?: string, replyToSender?: string }) => {
+  const handleSendMessage = (recipient: string, text: string, options?: { isGroup?: boolean, recipients?: string[], groupName?: string, replyToId?: string, replyToText?: string, replyToSender?: string, isSystem?: boolean }) => {
     if (!currentUser) return;
     const newMsg: Message = {
       id: Math.random().toString(36).substr(2, 9),
@@ -287,9 +329,18 @@ const App: React.FC = () => {
       groupName: options?.groupName,
       replyToId: options?.replyToId,
       replyToText: options?.replyToText,
-      replyToSender: options?.replyToSender
+      replyToSender: options?.replyToSender,
+      isSystem: options?.isSystem
     };
     setAllMessages(prev => [...prev, newMsg]);
+  };
+
+  const handleGroupUpdate = (updatedGroup: Group) => {
+    setAllGroups(prev => prev.map(g => g.id === updatedGroup.id ? updatedGroup : g));
+  };
+
+  const handleGroupCreate = (newGroup: Group) => {
+    setAllGroups(prev => [...prev, newGroup]);
   };
 
   if (isAppStarting) return <LoadingScreen />;
@@ -304,18 +355,104 @@ const App: React.FC = () => {
         .bg-custom { background-color: var(--theme-color); }
         .border-custom { border-color: var(--theme-color); }
       `}</style>
-      <AnimatePresence>{isMoodModalOpen && <MoodCheckIn onSubmit={(m) => { const today = new Date().toDateString(); setCurrentUser({ ...currentUser, moodStreak: currentUser.lastMoodDate === today ? currentUser.moodStreak : (currentUser.moodStreak || 0) + 1, lastMoodDate: today, moodHistory: [...(currentUser.moodHistory || []), { date: today, mood: m, score: MOOD_SCORES[m || 'Normal'] }] }); setIsMoodModalOpen(false); }} isDarkMode={isDarkMode} />}</AnimatePresence>
-      <Sidebar activeSection={activeSection} onNavigate={(s) => { setActiveSection(s); if(s === 'Profile') setViewingUsername(currentUser.username); }} isDarkMode={isDarkMode} user={currentUser} unreadMessages={allMessages.filter(m => m.recipient === currentUser.username && !m.read).length} unreadNotifications={notifications.filter(n => n.recipient === currentUser.username && !n.read).length} />
-      <main className="flex-1 flex flex-col relative pt-16 pb-20 md:pt-0 md:pb-0 h-full overflow-hidden">
+      <AnimatePresence>
+        {isMoodModalOpen && (
+          <MoodCheckIn 
+            onSubmit={(m) => { 
+              const today = new Date().toDateString(); 
+              setCurrentUser({ 
+                ...currentUser, 
+                moodStreak: currentUser.lastMoodDate === today ? currentUser.moodStreak : (currentUser.moodStreak || 0) + 1, 
+                lastMoodDate: today, 
+                moodHistory: [...(currentUser.moodHistory || []), { date: today, mood: m, score: MOOD_SCORES[m || 'Normal'] }] 
+              }); 
+              setIsMoodModalOpen(false); 
+            }} 
+            isDarkMode={isDarkMode} 
+          />
+        )}
+      </AnimatePresence>
+      <Sidebar 
+        activeSection={activeSection} 
+        onNavigate={(s) => { 
+          setActiveSection(s); 
+          if(s === 'Profile') setViewingUsername(currentUser.username); 
+        }} 
+        isDarkMode={isDarkMode} 
+        user={currentUser} 
+        unreadMessages={allMessages.filter(m => m.recipient === currentUser.username && !m.read).length} 
+        unreadNotifications={notifications.filter(n => n.recipient === currentUser.username && !n.read).length} 
+      />
+      <main className="flex-1 flex flex-col relative pt-14 pb-16 md:pt-0 md:pb-0 h-full overflow-hidden">
         <div className="flex-1 overflow-y-auto fading-scrollbar p-4 md:p-8">
-          <motion.div key={activeSection + (activeSection === 'Profile' ? viewingUsername : '')} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl mx-auto">
+          <motion.div 
+            key={activeSection + (activeSection === 'Profile' ? viewingUsername : '')} 
+            initial={{ opacity: 0, y: 10 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            className="max-w-5xl mx-auto"
+          >
             {activeSection === 'Home' && <HomeSection user={currentUser} posts={allPosts} isDarkMode={isDarkMode} />}
-            {activeSection === 'Mood' && <MoodSection user={currentUser} posts={allPosts} onPost={(c, v) => setAllPosts(prev => [{id: Math.random().toString(36).substr(2, 9), author: currentUser.username, content: c, hearts: 0, comments: [], timestamp: Date.now(), visibility: v}, ...prev])} onHeart={handleHeart} onComment={(pid, t) => setAllPosts(prev => prev.map(p => p.id === pid ? { ...p, comments: [...p.comments, { id: Math.random().toString(36).substr(2, 9), author: currentUser.username, text: t, hearts: 0, timestamp: Date.now(), replies: [] }] } : p))} onCommentInteraction={handleCommentInteraction} onRepost={handleRepost} onFollow={handleFollow} onBlock={handleBlock} isDarkMode={isDarkMode} onNavigateToProfile={(u) => {setViewingUsername(u); setActiveSection('Profile');}} onUpdatePet={updatePetStats} />}
+            {activeSection === 'Mood' && (
+              <MoodSection 
+                user={currentUser} 
+                posts={allPosts} 
+                onPost={(c, v) => setAllPosts(prev => [{id: Math.random().toString(36).substr(2, 9), author: currentUser.username, content: c, hearts: 0, comments: [], timestamp: Date.now(), visibility: v}, ...prev])} 
+                onHeart={handleHeart} 
+                onComment={(pid, t) => setAllPosts(prev => prev.map(p => p.id === pid ? { ...p, comments: [...p.comments, { id: Math.random().toString(36).substr(2, 9), author: currentUser.username, text: t, hearts: 0, timestamp: Date.now(), replies: [] }] } : p))} 
+                onCommentInteraction={handleCommentInteraction} 
+                onRepost={handleRepost} 
+                onFollow={handleFollow} 
+                onBlock={handleBlock} 
+                isDarkMode={isDarkMode} 
+                onNavigateToProfile={(u) => {setViewingUsername(u); setActiveSection('Profile');}} 
+                onUpdatePet={updatePetStats} 
+              />
+            )}
             {activeSection === 'Zodiac' && <ZodiacSection isDarkMode={isDarkMode} />}
-            {activeSection === 'CityHall' && <CityHallSection isDarkMode={isDarkMode} currentUser={currentUser} messages={allMessages} onSendMessage={handleSendMessage} onReadMessages={(u) => setAllMessages(prev => prev.map(m => (m.recipient === currentUser.username && m.sender === u) ? {...m, read: true} : m))} onNavigateToProfile={(u) => {setViewingUsername(u); setActiveSection('Profile');}} onReactToMessage={handleMessageReaction} />}
-            {activeSection === 'Notifications' && <NotificationsSection notifications={notifications.filter(n => n.recipient === currentUser.username)} isDarkMode={isDarkMode} onMarkRead={() => setNotifications(notifications.map(n => n.recipient === currentUser.username ? {...n, read: true} : n))} />}
-            {activeSection === 'Profile' && profileToView && <ProfileSection user={profileToView} allPosts={allPosts} isDarkMode={isDarkMode} currentUser={currentUser} onEditProfile={(dn, un, pp, ti, bp, pc, bi) => { setCurrentUser({...currentUser, displayName: dn, username: un, profilePic: pp, title: ti, profileColor: pc, bio: bi}); setViewingUsername(un); }} onBlock={handleBlock} onFollow={handleFollow} />}
-            {activeSection === 'Settings' && <SettingsSection isDarkMode={isDarkMode} onToggleDarkMode={() => setIsDarkMode(!isDarkMode)} onLogout={() => {localStorage.removeItem('mooderia_user'); setCurrentUser(null);}} user={currentUser} onUnblock={(u) => setCurrentUser({...currentUser, blockedUsers: currentUser.blockedUsers.filter(b => b !== u)})} />}
+            {activeSection === 'CityHall' && (
+              <CityHallSection 
+                isDarkMode={isDarkMode} 
+                currentUser={currentUser} 
+                messages={allMessages} 
+                groups={allGroups}
+                onSendMessage={handleSendMessage} 
+                onGroupUpdate={handleGroupUpdate}
+                onGroupCreate={handleGroupCreate}
+                onReadMessages={(u) => setAllMessages(prev => prev.map(m => (m.recipient === currentUser.username && m.sender === u) ? {...m, read: true} : m))} 
+                onNavigateToProfile={(u) => {setViewingUsername(u); setActiveSection('Profile');}} 
+                onReactToMessage={handleMessageReaction} 
+              />
+            )}
+            {activeSection === 'Notifications' && (
+              <NotificationsSection 
+                notifications={notifications.filter(n => n.recipient === currentUser.username)} 
+                isDarkMode={isDarkMode} 
+                onMarkRead={() => setNotifications(notifications.map(n => n.recipient === currentUser.username ? {...n, read: true} : n))} 
+              />
+            )}
+            {activeSection === 'Profile' && profileToView && (
+              <ProfileSection 
+                user={profileToView} 
+                allPosts={allPosts} 
+                isDarkMode={isDarkMode} 
+                currentUser={currentUser} 
+                onEditProfile={(dn, un, pp, ti, bp, pc, bi) => { 
+                  setCurrentUser({...currentUser, displayName: dn, username: un, profilePic: pp, title: ti, profileColor: pc, bio: bi}); 
+                  setViewingUsername(un); 
+                }} 
+                onBlock={handleBlock} 
+                onFollow={handleFollow} 
+              />
+            )}
+            {activeSection === 'Settings' && (
+              <SettingsSection 
+                isDarkMode={isDarkMode} 
+                onToggleDarkMode={() => setIsDarkMode(!isDarkMode)} 
+                onLogout={() => {localStorage.removeItem('mooderia_user'); setCurrentUser(null);}} 
+                user={currentUser} 
+                onUnblock={(u) => setCurrentUser({...currentUser, blockedUsers: currentUser.blockedUsers.filter(b => b !== u)})} 
+              />
+            )}
           </motion.div>
         </div>
       </main>

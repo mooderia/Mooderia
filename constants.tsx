@@ -17,7 +17,7 @@ export const ZODIACS: ZodiacInfo[] = [
 ];
 
 export const JOB_TITLES = [
-  'Citizen', 'Student', 'Teacher', 'Artist', 'Engineer', 'Doctor', 'Chef', 'Athlete', 'Musician', 'Explorer'
+  'Citizen', 'Student', 'Teacher', 'Artist', 'Engineer', 'Doctor', 'Chef', 'Athlete', 'Musician', 'Explorer', 'Creator'
 ];
 
 export const MOOD_SCORES: Record<string, number> = {

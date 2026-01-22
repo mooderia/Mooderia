@@ -59,6 +59,10 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({ user, allPosts, isDarkM
 
   const accentColor = user.profileColor || '#e21b3c';
 
+  const availableTitles = useMemo(() => {
+    return JOB_TITLES.filter(t => t !== 'Creator' || user.email === 'travismiguel014@gmail.com');
+  }, [user.email]);
+
   return (
     <div className="flex flex-col gap-6 pb-20">
       {/* Decorative Banner - Ultra Large Watermark Title */}
@@ -206,7 +210,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({ user, allPosts, isDarkM
                 <div className="flex justify-center mb-8"><div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}><div className="w-32 h-32 md:w-40 md:h-40 rounded-3xl overflow-hidden border-4 border-black/5 bg-custom flex items-center justify-center shadow-lg">{editForm.profilePic ? <img src={editForm.profilePic} className="w-full h-full object-cover" /> : <span className="text-white text-4xl font-black">{editForm.displayName[0]}</span>}</div><div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-3xl"><Camera className="text-white" size={40}/></div><input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" /></div></div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2"><p className="text-[9px] font-black uppercase opacity-30 ml-2">Identity Alias</p><input type="text" value={editForm.displayName} onChange={e => setEditForm({...editForm, displayName: e.target.value})} className="w-full p-4 rounded-xl border-2 bg-black/5 font-black outline-none focus:border-custom text-sm" /></div>
-                  <div className="space-y-2"><p className="text-[9px] font-black uppercase opacity-30 ml-2">Metropolis Role</p><select value={editForm.title} onChange={e => setEditForm({...editForm, title: e.target.value})} className="w-full p-4 rounded-xl border-2 bg-black/5 font-black outline-none focus:border-custom appearance-none text-sm">{JOB_TITLES.map(j => <option key={j} value={j}>{j}</option>)}</select></div>
+                  <div className="space-y-2"><p className="text-[9px] font-black uppercase opacity-30 ml-2">Metropolis Role</p><select value={editForm.title} onChange={e => setEditForm({...editForm, title: e.target.value})} className="w-full p-4 rounded-xl border-2 bg-black/5 font-black outline-none focus:border-custom appearance-none text-sm">{availableTitles.map(j => <option key={j} value={j}>{j}</option>)}</select></div>
                 </div>
                 <div className="space-y-2"><p className="text-[9px] font-black uppercase opacity-30 ml-2">Internal Aura (Color)</p><input type="color" value={editForm.profileColor} onChange={e => setEditForm({...editForm, profileColor: e.target.value})} className="h-12 w-full rounded-xl cursor-pointer bg-transparent border-2 border-black/5" /></div>
                 <div className="space-y-2"><p className="text-[9px] font-black uppercase opacity-30 ml-2">Neural Bio (Max 150)</p><textarea value={editForm.bio} onChange={e => setEditForm({...editForm, bio: e.target.value})} className="w-full p-4 rounded-xl border-2 bg-black/5 font-bold outline-none focus:border-custom text-sm" rows={3} maxLength={150} /></div>
