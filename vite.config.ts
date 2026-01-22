@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => {
         }
       },
       build: {
-        outDir: 'docs'
+        outDir: env.VERCEL === '1' ? 'dist' : 'docs'
       }
     };
 });
