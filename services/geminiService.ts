@@ -1,19 +1,9 @@
 
-let aiModulePromise: Promise<any> | null = null;
-let ai: any;
-const getAi = async () => {
-  if (!aiModulePromise) {
-    aiModulePromise = import('https://esm.sh/@google/genai@1.35.0');
-  }
-  const mod = await aiModulePromise;
-  if (!ai) {
-    ai = new mod.GoogleGenAI({ apiKey: process.env.API_KEY });
-  }
-  return mod;
-};
+import { GoogleGenAI, Type } from "@google/genai";
+
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const getPsychiatristResponse = async (message: string) => {
-  const mod = await getAi();
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
     contents: message,
@@ -25,7 +15,6 @@ export const getPsychiatristResponse = async (message: string) => {
 };
 
 export const getHoroscope = async (sign: string) => {
-  await getAi();
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: `Provide a daily horoscope for ${sign} today.`,
@@ -37,17 +26,16 @@ export const getHoroscope = async (sign: string) => {
 };
 
 export const getLovePrediction = async (sign1: string, sign2: string) => {
-    const mod = await getAi();
     const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Predict love compatibility between ${sign1} and ${sign2}. Return only a JSON object with 'percentage' (0-100) and 'reason'.`,
         config: {
             responseMimeType: "application/json",
             responseSchema: {
-                type: mod.Type.OBJECT,
+                type: Type.OBJECT,
                 properties: {
-                    percentage: { type: mod.Type.NUMBER },
-                    reason: { type: mod.Type.STRING }
+                    percentage: { type: Type.NUMBER },
+                    reason: { type: Type.STRING }
                 },
                 required: ['percentage', 'reason']
             }
@@ -58,7 +46,6 @@ export const getLovePrediction = async (sign1: string, sign2: string) => {
 }
 
 export const getTellerResponse = async (question: string) => {
-  await getAi();
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
     contents: `Predict the answer to this question: ${question}`,

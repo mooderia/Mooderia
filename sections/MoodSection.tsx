@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Send, Sparkles, Brain, Clock, Globe, Users, Trophy, MessageSquare, Repeat, Reply } from 'lucide-react';
 import { User, Post, Comment } from '../types';
 import MoodPetSection from './MoodPetSection';
-import { getTellerResponse } from '../services/geminiService';
 import { STREAK_BADGES } from '../constants';
 
 interface MoodSectionProps {
@@ -123,17 +122,23 @@ const MoodSection: React.FC<MoodSectionProps> = ({ user, posts, onPost, onHeart,
     </div>
   );
 
-  const handleTeller = async () => {
+  const handleTeller = () => {
     if (!tellerQuestion.trim()) return;
     setIsTellerLoading(true);
-    try {
-      const res = await getTellerResponse(tellerQuestion);
-      setTellerResponse(res || 'THE COSMOS IS SILENT.');
-    } catch (e) {
-      setTellerResponse('ERROR: NEURAL LINK SEVERED.');
-    } finally {
+    
+    // Simulate thinking for effect
+    setTimeout(() => {
+      const rand = Math.random();
+      let result = '';
+      if (rand < 0.2) result = 'YES. The stars have spoken!';
+      else if (rand < 0.4) result = 'NO. The frequency is blocked.';
+      else if (rand < 0.6) result = 'MAYBE. The vibes are still charging.';
+      else if (rand < 0.8) result = 'SUPER YES! The universe is screaming it!';
+      else result = 'SUPER NO! Not in this city, or any other.';
+      
+      setTellerResponse(result);
       setIsTellerLoading(false);
-    }
+    }, 1200);
   };
 
   const startQuiz = () => {
@@ -144,18 +149,25 @@ const MoodSection: React.FC<MoodSectionProps> = ({ user, posts, onPost, onHeart,
   };
 
   const QUIZ_STEPS = [
-    { q: "A silent broadcast echoes through the city. Do you listen?", options: ["Deep Focus", "Active Search", "Ignore Link", "Report Anomaly"], scores: { Normal: 5, Excited: 5, Tired: 5, Angry: 5 } },
-    { q: "A fellow citizen sends a neural heart. Your vibe?", options: ["Return Pulse", "Analyze Intention", "Block Frequency", "Feel Glow"], scores: { Excited: 5, Angry: 5, Tired: 5, Happy: 5 } },
-    { q: "Your Guardian pet is glowing a strange violet. Actions?", options: ["Study Pattern", "Join Rhythm", "Check Health", "Alert City"], scores: { Normal: 5, Happy: 5, Tired: 5, Angry: 5 } }
+    { q: "How happy do you feel right now?", options: ["Very!", "A little", "Not much", "Not at all"], scores: ["Happy", "Normal", "Tired", "Angry"] },
+    { q: "Are you feeling sleepy?", options: ["No, I'm awake!", "A tiny bit", "I need a nap", "I'm a zombie"], scores: ["Excited", "Normal", "Tired", "Tired"] },
+    { q: "Are you mad at anyone?", options: ["No, I'm chill", "Just a bit", "Maybe one person", "I'm so angry!"], scores: ["Happy", "Normal", "Angry", "Angry"] },
+    { q: "Do you feel excited about today?", options: ["Yes, so much!", "Maybe a bit", "Not really", "Zero excitement"], scores: ["Excited", "Excited", "Normal", "Tired"] },
+    { q: "How fast is your brain working?", options: ["Super fast!", "Normal speed", "A bit slow", "It's stuck"], scores: ["Excited", "Normal", "Tired", "Normal"] },
+    { q: "Do you want to hug a pet?", options: ["Yes, please!", "Sure", "Not really", "No way"], scores: ["Happy", "Happy", "Normal", "Angry"] },
+    { q: "How much do you like today?", options: ["I love it!", "It's okay", "It's boring", "I hate it"], scores: ["Happy", "Normal", "Tired", "Angry"] },
+    { q: "Are you busy right now?", options: ["Very busy!", "A little bit", "Not at all", "I'm bored"], scores: ["Excited", "Normal", "Happy", "Tired"] },
+    { q: "Do you feel like dancing?", options: ["Yes, right now!", "Maybe later", "No, too tired", "Not my vibe"], scores: ["Excited", "Happy", "Tired", "Normal"] },
+    { q: "Pick your favorite color!", options: ["Yellow", "Blue", "Red", "Green"], scores: ["Happy", "Tired", "Angry", "Normal"] }
   ];
 
   const handleQuizChoice = (idx: number) => {
     const currentStep = QUIZ_STEPS[quizStep];
-    const moodKey = Object.keys(currentStep.scores)[idx];
+    const moodKey = currentStep.scores[idx];
     const updatedScores = { ...quizScores };
     
     if (moodKey) {
-      updatedScores[moodKey] = (updatedScores[moodKey] || 0) + 5;
+      updatedScores[moodKey] = (updatedScores[moodKey] || 0) + 1;
       setQuizScores(updatedScores);
     }
 
@@ -280,8 +292,8 @@ const MoodSection: React.FC<MoodSectionProps> = ({ user, posts, onPost, onHeart,
             <motion.div key="teller" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={`p-10 rounded-[3rem] ${isDarkMode ? 'bg-slate-900' : 'bg-white'} border-4 border-black/5 shadow-xl text-center flex flex-col items-center`}>
                <Sparkles className="mb-6 text-custom" size={60} />
                <h2 className="text-2xl md:text-4xl font-black mb-8 uppercase italic tracking-tighter">Fortune Oracle</h2>
-               <input value={tellerQuestion} onChange={e => setTellerQuestion(e.target.value)} placeholder="Sync query with the stars..." className={`w-full max-w-xl p-5 rounded-2xl border-2 font-black text-center mb-6 outline-none focus:border-custom shadow-inner ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-gray-50 border-gray-100'}`} />
-               <button onClick={handleTeller} disabled={isTellerLoading} className="kahoot-button-custom px-10 py-5 rounded-2xl text-white font-black uppercase text-sm shadow-lg active:scale-95 transition-transform">{isTellerLoading ? 'CALCULATING...' : 'AUTHORIZE QUERY'}</button>
+               <input value={tellerQuestion} onChange={e => setTellerQuestion(e.target.value)} placeholder="Type a question for the stars..." className={`w-full max-w-xl p-5 rounded-2xl border-2 font-black text-center mb-6 outline-none focus:border-custom shadow-inner ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-gray-50 border-gray-100'}`} />
+               <button onClick={handleTeller} disabled={isTellerLoading} className="kahoot-button-custom px-10 py-5 rounded-2xl text-white font-black uppercase text-sm shadow-lg active:scale-95 transition-transform">{isTellerLoading ? 'CALCULATING...' : 'ASK THE STARS'}</button>
                {tellerResponse && (
                  <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="mt-8 p-6 rounded-3xl bg-custom/5 border-l-8 border-custom italic font-bold text-lg max-w-lg">
                    "{tellerResponse}"
@@ -296,8 +308,8 @@ const MoodSection: React.FC<MoodSectionProps> = ({ user, posts, onPost, onHeart,
                <h2 className="text-2xl md:text-4xl font-black mb-6 uppercase italic tracking-tighter">Emotional Scan</h2>
                {!quizActive ? (
                  <>
-                   <p className="opacity-40 font-bold uppercase tracking-widest text-[10px] mb-10">Initiate neural resonance diagnostics</p>
-                   <button onClick={startQuiz} className="kahoot-button-blue px-10 py-5 rounded-2xl text-white font-black uppercase text-sm shadow-lg">Run Diagnostics</button>
+                   <p className="opacity-40 font-bold uppercase tracking-widest text-[10px] mb-10">See your mood signature in 10 quick steps</p>
+                   <button onClick={startQuiz} className="kahoot-button-blue px-10 py-5 rounded-2xl text-white font-black uppercase text-sm shadow-lg">Start Scan</button>
                  </>
                ) : (
                  <div className="w-full max-w-lg space-y-8">
@@ -309,7 +321,7 @@ const MoodSection: React.FC<MoodSectionProps> = ({ user, posts, onPost, onHeart,
                           <p className="text-[10px] font-bold opacity-70 uppercase tracking-widest mb-2">Neural Signature</p>
                           <p className="text-2xl font-black text-custom italic uppercase">{quizResult}</p>
                         </div>
-                        <button onClick={() => setQuizActive(false)} className="kahoot-button-custom px-8 py-3 rounded-xl text-white font-black uppercase text-xs">Reset Terminal</button>
+                        <button onClick={() => setQuizActive(false)} className="kahoot-button-custom px-8 py-3 rounded-xl text-white font-black uppercase text-xs">Reset Scan</button>
                      </div>
                    ) : (
                      <div className="space-y-8">
@@ -320,6 +332,7 @@ const MoodSection: React.FC<MoodSectionProps> = ({ user, posts, onPost, onHeart,
                              <button key={opt} onClick={() => handleQuizChoice(i)} className="kahoot-button-custom py-4 rounded-xl text-white font-black uppercase text-[10px] active:scale-95 transition-transform">{opt}</button>
                            ))}
                         </div>
+                        <p className="text-[10px] font-black uppercase opacity-30">Step {quizStep + 1} of {QUIZ_STEPS.length}</p>
                      </div>
                    )}
                  </div>
