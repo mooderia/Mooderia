@@ -1,92 +1,100 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 
-/**
- * Utility to communicate with Gemini.
- * Uses process.env.API_KEY exclusively.
- */
-const callGemini = async (model: string, prompt: string, config?: any) => {
+// Standard initialization as per instructions
+// Using a function to ensure we catch the environment variable at runtime
+const getAI = () => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    console.error("METROPOLIS ERROR: API_KEY is missing from environment.");
+    // We return a dummy key or handle the error gracefully so the app doesn't crash
+    // but the user's specific instruction is to use process.env.API_KEY directly.
+  }
+  return new GoogleGenAI({ apiKey: apiKey || "" });
+};
+
+export const getPsychiatristResponse = async (message: string) => {
   try {
-    const apiKey = process.env.API_KEY;
-    if (!apiKey) {
-      throw new Error("METROPOLIS_LINK_OFFLINE: API key not found.");
-    }
-
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = getAI();
     const response = await ai.models.generateContent({
-      model: model,
-      contents: prompt,
-      config: config
+      model: 'gemini-3-flash-preview',
+      contents: [{ parts: [{ text: message }] }],
+      config: {
+        systemInstruction: "You are Dr. Philippe Pinel, the Chief Psychiatrist of Mooderia. You provide compassionate, expert, and concise mental health support to citizens. Your tone is professional, warm, and therapeutic. Focus on validation, mindfulness, and gentle guidance. Keep responses under 3 paragraphs.",
+      }
     });
-
-    if (!response || !response.text) {
-      throw new Error("NEURAL_LINK_EMPTY: No response from metropolis.");
-    }
-
-    return response.text;
-  } catch (error: any) {
-    console.error("METROPOLIS ERROR:", error);
-    throw error;
+    return { text: response.text || "The neural link is experiencing static. Dr. Pinel is momentarily unavailable." };
+  } catch (error) {
+    console.error("Psychiatrist API Error:", error);
+    return { text: "Connection to the Medical District failed. Please ensure your Metropolis credentials (API Key) are valid and that you have redeployed after adding them." };
   }
 };
 
 export const getHoroscope = async (sign: string) => {
   try {
-    const prompt = `Provide a daily horoscope for the zodiac sign ${sign}. 
-    Make it three sentences long, modern, and inspiring. 
-    Tone: Chief Astrologer of a vibrant metropolis.`;
-    
-    return await callGemini('gemini-3-flash-preview', prompt, {
-      systemInstruction: "You are the Chief Astrologer of Mooderia."
+    const ai = getAI();
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: [{ parts: [{ text: `Provide a daily horoscope for ${sign} today.` }] }],
+      config: {
+        systemInstruction: "You are a mystical Metropolis Astrologer. Provide a 3-sentence daily horoscope that is encouraging and insightful. Use cosmic and modern terminology.",
+      }
     });
-  } catch (error: any) {
-    return `NEURAL LINK INTERFERENCE: ${error.message || "The stars are currently obscured by metropolis clouds."}`;
+    return response.text || "The constellations are currently obscured by metropolis smog.";
+  } catch (error) {
+    console.error("Horoscope API Error:", error);
+    return "The stars are recalibrating. Check back later.";
   }
 };
 
 export const getLovePrediction = async (sign1: string, sign2: string) => {
   try {
-    const prompt = `Calculate love compatibility between ${sign1} and ${sign2}. 
-    Return a JSON object with 'percentage' (number) and 'reason' (concise string).`;
-    
-    const text = await callGemini('gemini-3-flash-preview', prompt, {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          percentage: { type: Type.NUMBER },
-          reason: { type: Type.STRING }
-        },
-        required: ['percentage', 'reason']
-      }
+    const ai = getAI();
+    const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: [{ parts: [{ text: `Predict love compatibility between ${sign1} and ${sign2}. Return only a JSON object with 'percentage' (0-100) and 'reason'.` }] }],
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                    percentage: { type: Type.NUMBER },
+                    reason: { type: Type.STRING }
+                },
+                required: ['percentage', 'reason']
+            }
+        }
     });
     
-    return JSON.parse(text);
+    const text = response.text || "{}";
+    return JSON.parse(text.trim());
   } catch (error) {
-    return { percentage: 50, reason: "Atmospheric interference prevents a clear sync." };
+    console.error("Love Prediction API Error:", error);
+    return { percentage: 50, reason: "The romantic frequencies are currently experiencing atmospheric interference." };
   }
-};
+}
 
 export const checkContentSafety = async (text: string) => {
   try {
-    if (!text || text.length < 2) return { isInappropriate: false, reason: "" };
-    const prompt = `Scan this text for safety and metropolis rules: "${text}". 
-    Return JSON with 'isInappropriate' (boolean) and 'reason' (string).`;
-    
-    const resText = await callGemini('gemini-3-flash-preview', prompt, {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          isInappropriate: { type: Type.BOOLEAN },
-          reason: { type: Type.STRING }
-        },
-        required: ['isInappropriate', 'reason']
+    const ai = getAI();
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: [{ parts: [{ text: `Analyze the following text for inappropriate language, hate speech, severe insults, or harassment: "${text}". Return a JSON object with 'isInappropriate' (boolean) and 'reason' (string, keep it short).` }] }],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            isInappropriate: { type: Type.BOOLEAN },
+            reason: { type: Type.STRING }
+          },
+          required: ['isInappropriate', 'reason']
+        }
       }
     });
-
-    return JSON.parse(resText);
+    const resultText = response.text || "{}";
+    return JSON.parse(resultText.trim());
   } catch (error) {
+    console.error("Safety Check Error:", error);
     return { isInappropriate: false, reason: "" };
   }
 };

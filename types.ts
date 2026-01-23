@@ -1,6 +1,14 @@
 
 export type Mood = 'Wonderful' | 'Excited' | 'Happy' | 'Normal' | 'Tired' | 'Angry' | 'Flaming' | null;
 
+export interface Badge {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  threshold: number;
+}
+
 export interface User {
   displayName: string;
   username: string;
@@ -21,28 +29,72 @@ export interface User {
   profileColor?: string;
   title?: string;
   likesReceived: number;
+  // Mood Pet Stats
   petName: string;
   moodCoins: number;
   petEmoji: string;
-  petHunger: number;
-  petThirst: number;
-  petRest: number;
+  petHunger: number; // 0-100
+  petThirst: number; // 0-100
+  petRest: number;   // 0-100
   petLevel: number;
   petExp: number;
   petHasBeenChosen: boolean;
-  petLastUpdate: number;
-  petSleepUntil: number | null;
-  gameCooldowns: Record<string, number>;
+  petLastUpdate: number; // timestamp
+  petSleepUntil: number | null; // timestamp
+  gameCooldowns: Record<string, number>; // gameId -> timestamp of when it can be played again
+  // Security / Moderation
   warnings: number;
   isBanned: boolean;
+}
+
+export interface MessageReaction {
+  emoji: string;
+  users: string[]; // List of usernames who used this emoji
+}
+
+export interface Group {
+  id: string;
+  name: string;
+  photo?: string; // Emoji or dataURL
+  members: string[]; // List of usernames
+  nicknames: Record<string, string>; // username -> nickname mapping
+  owner: string;
+  createdAt: number;
+}
+
+export interface Message {
+  id: string;
+  sender: string;
+  recipient: string; // For DMs, this is the username. For Groups, this is the groupId.
+  text: string;
+  timestamp: number;
+  read: boolean;
+  reactions?: MessageReaction[];
+  isGroup?: boolean;
+  isSystem?: boolean; // For "X left the group" messages
+  recipients?: string[]; // (Deprecated for new logic but kept for compat)
+  groupName?: string;
+  replyToId?: string;
+  replyToText?: string;
+  replyToSender?: string;
+}
+
+export interface Notification {
+  id: string;
+  type: 'heart' | 'comment' | 'repost' | 'tier' | 'achievement' | 'follow' | 'comment_heart' | 'reply' | 'reaction' | 'warning';
+  fromUser: string;
+  recipient: string; 
+  postId?: string;
+  timestamp: number;
+  read: boolean;
+  postContentSnippet: string;
 }
 
 export interface Post {
   id: string;
   author: string;
   content: string;
-  hearts: number;
-  likedBy: string[]; // List of usernames who liked the post
+  likes: string[]; // Updated from 'hearts: number' to track who liked it
   comments: Comment[];
   timestamp: number;
   isRepost?: boolean;
@@ -67,51 +119,4 @@ export interface ZodiacInfo {
   description: string;
   history: string;
   symbol: string;
-}
-
-export interface Badge {
-  id: string;
-  name: string;
-  icon: string;
-  description: string;
-  threshold: number;
-}
-
-export interface Message {
-  id: string;
-  sender: string;
-  recipient: string;
-  text: string;
-  timestamp: number;
-  isGroup?: boolean;
-  isSystem?: boolean;
-  replyToId?: string;
-  replyToText?: string;
-  replyToSender?: string;
-}
-
-export interface Group {
-  id: string;
-  name: string;
-  owner: string;
-  members: string[];
-  nicknames: Record<string, string>;
-  createdAt: number;
-  photo?: string;
-}
-
-export interface Notification {
-  id: string;
-  fromUser: string;
-  recipient: string;
-  type: 'heart' | 'comment_heart' | 'comment' | 'reply' | 'repost' | 'achievement' | 'follow';
-  postId: string;
-  timestamp: number;
-  read: boolean;
-  postContentSnippet: string;
-}
-
-export interface MessageReaction {
-  emoji: string;
-  users: string[];
 }

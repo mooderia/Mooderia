@@ -145,7 +145,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({ user, allPosts, isDarkM
                   <div className="flex justify-between items-center mb-4"><div className="flex items-center gap-2"><ClockIcon size={12} className="opacity-20"/><p className="text-[9px] font-black opacity-30 uppercase tracking-widest">{new Date(post.timestamp).toLocaleDateString()}</p></div><Globe size={12} className="opacity-20"/></div>
                   <p className="font-bold text-sm md:text-lg mb-6 leading-relaxed italic opacity-90 break-words line-clamp-3">"{post.content}"</p>
                   <div className="flex items-center gap-6 pt-4 border-t border-black/5">
-                    <span className="flex items-center gap-2 text-custom font-black text-[9px] md:text-xs uppercase"><Heart size={16} fill={post.hearts > 0 ? "currentColor" : "none"} /> {post.hearts} Sync</span>
+                    <span className="flex items-center gap-2 text-custom font-black text-[9px] md:text-xs uppercase"><Heart size={16} fill={post.likes.length > 0 ? "currentColor" : "none"} /> {post.likes.length} Sync</span>
                     <span className="flex items-center gap-2 text-blue-500 font-black text-[9px] md:text-xs uppercase"><MessageSquare size={16} /> {post.comments.length} Echoes</span>
                   </div>
                 </motion.div>
@@ -159,7 +159,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({ user, allPosts, isDarkM
                 <motion.div key={post.id} initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className={`p-6 rounded-[2rem] ${isDarkMode ? 'bg-slate-900 border-green-500/10' : 'bg-white border-green-500/5'} border-2 shadow-md relative`}>
                   <div className="flex items-center gap-3 mb-4"><div className="bg-green-500/10 p-2 rounded-lg text-green-500"><Repeat size={16} /></div><p className="text-[9px] font-black uppercase text-green-500 italic truncate">Echoed from @{post.originalAuthor}</p></div>
                   <p className="font-bold text-sm md:text-lg mb-6 leading-relaxed italic opacity-90">"{post.content}"</p>
-                  <div className="flex items-center gap-4 text-[9px] font-black uppercase text-custom"><Heart size={16} /> {post.hearts} Resonance</div>
+                  <div className="flex items-center gap-4 text-[9px] font-black uppercase text-custom"><Heart size={16} /> {post.likes.length} Resonance</div>
                 </motion.div>
               )) : <div className="col-span-full py-20 text-center opacity-20 font-black uppercase text-lg italic tracking-widest">No echoed signals.</div>}
             </React.Fragment>
@@ -168,7 +168,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({ user, allPosts, isDarkM
           {activeTab === 'Stats' && (
             <motion.div key="stats" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="col-span-full grid grid-cols-1 md:grid-cols-3 gap-6">
                {[
-                 { icon: <Heart size={32} className="text-red-500" />, val: myPosts.reduce((acc, p) => acc + p.hearts, 0), label: 'Resonance' },
+                 { icon: <Heart size={32} className="text-red-500" />, val: myPosts.reduce((acc, p) => acc + p.likes.length, 0), label: 'Resonance' },
                  { icon: <Trophy size={32} className="text-yellow-500" />, val: user.likesReceived, label: 'Influence' },
                  { icon: <Zap size={32} className="text-blue-500" />, val: user.petLevel, label: 'Guardian Rank' }
                ].map((stat, i) => (

@@ -1,18 +1,19 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Send, Globe, Users, MessageSquare, Repeat, Edit2, Trash2, Check, X, Clock, Info } from 'lucide-react';
-import { User, Post } from '../types';
+import { Heart, Send, Sparkles, Brain, Clock, Globe, Users, Trophy, MessageSquare, Repeat, Reply, ShieldAlert, Activity, Stethoscope, Trash2, Edit, X } from 'lucide-react';
+import { User, Post, Comment } from '../types';
 import MoodPetSection from './MoodPetSection';
+import { STREAK_BADGES } from '../constants';
 import { checkContentSafety } from '../services/geminiService';
 
 interface MoodSectionProps {
   user: User;
   posts: Post[];
   onPost: (content: string, visibility: 'global' | 'circle') => void;
-  onEditPost: (postId: string, content: string) => void;
-  onDeletePost: (postId: string) => void;
   onHeart: (postId: string) => void;
+  onDeletePost: (postId: string) => void;
+  onEditPost: (postId: string, newContent: string) => void;
   onComment: (postId: string, text: string) => void;
   onCommentInteraction: (postId: string, commentId: string, action: 'heart' | 'reply', replyText?: string) => void;
   onRepost: (post: Post) => void;
@@ -24,24 +25,43 @@ interface MoodSectionProps {
   onViolation: (reason: string) => void;
 }
 
-const MoodSection: React.FC<MoodSectionProps> = ({ 
-  user, posts, onPost, onEditPost, onDeletePost, onHeart, onComment, 
-  onRepost, isDarkMode, onNavigateToProfile, onUpdatePet, onViolation 
-}) => {
-  const [subTab, setSubTab] = useState<'Express' | 'Mood Pet'>('Express');
+const MoodSection: React.FC<MoodSectionProps> = ({ user, posts, onPost, onHeart, onDeletePost, onEditPost, onComment, onCommentInteraction, onRepost, onFollow, onBlock, isDarkMode, onNavigateToProfile, onUpdatePet, onViolation }) => {
+  const [subTab, setSubTab] = useState<'Express' | 'Teller' | 'Scan' | 'Mood Pet'>('Express');
   const [postContent, setPostContent] = useState('');
   const [feedFilter, setFeedFilter] = useState<'Global' | 'Circle'>('Global');
   const [postVisibility, setPostVisibility] = useState<'global' | 'circle'>('global');
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   
-  const [editingPostId, setEditingPostId] = useState<string | null>(null);
-  const [editBuffer, setEditBuffer] = useState('');
-  const [showLikersId, setShowLikersId] = useState<string | null>(null);
+  const [tellerQuestion, setTellerQuestion] = useState('');
+  const [tellerResponse, setTellerResponse] = useState('');
+  const [isTellerLoading, setIsTellerLoading] = useState(false);
+
+  const [quizActive, setQuizActive] = useState(false);
+  const [quizStep, setQuizStep] = useState(0);
+  const [quizScores, setQuizScores] = useState<Record<string, number>>({ Happy: 0, Angry: 0, Tired: 0, Normal: 0, Excited: 0 });
+  const [quizResult, setQuizResult] = useState<string | null>(null);
+
   const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+  const [replyingTo, setReplyingTo] = useState<{ postId: string, commentId: string } | null>(null);
+  const [replyContent, setReplyContent] = useState('');
+
+  // Editing state
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [editBuffer, setEditBuffer] = useState('');
+
+  // View Likers Modal
+  const [likersModalPost, setLikersModalPost] = useState<Post | null>(null);
 
   const filteredPosts = useMemo(() => {
-    let result = posts.filter(p => !user.blockedUsers.includes(p.author));
+    const allUsers: User[] = JSON.parse(localStorage.getItem('mooderia_all_users') || '[]');
+    const usersWhoBlockedMe = allUsers.filter(u => u.blockedUsers.includes(user.username)).map(u => u.username);
+    
+    let result = posts.filter(p => 
+      !user.blockedUsers.includes(p.author) && 
+      !usersWhoBlockedMe.includes(p.author)
+    );
+
     if (feedFilter === 'Global') {
       return result.filter(p => p.visibility === 'global');
     }
@@ -51,41 +71,33 @@ const MoodSection: React.FC<MoodSectionProps> = ({
   const handlePost = async () => {
     if (!postContent.trim() || isBroadcasting) return;
     setIsBroadcasting(true);
-    try {
-      const safety = await checkContentSafety(postContent);
-      if (safety.isInappropriate) {
-        onViolation(safety.reason);
-        setIsBroadcasting(false);
-        return;
-      }
-    } catch (e) {}
+    
+    const safety = await checkContentSafety(postContent);
+    if (safety.isInappropriate) {
+      onViolation(safety.reason);
+      setIsBroadcasting(false);
+      return;
+    }
+
     onPost(postContent, postVisibility);
     setPostContent('');
     setIsBroadcasting(false);
   };
 
-  const startEdit = (post: Post) => {
+  const handleStartEdit = (post: Post) => {
     setEditingPostId(post.id);
     setEditBuffer(post.content);
   };
 
-  const handleSaveEdit = async (postId: string) => {
-    if (!editBuffer.trim()) return;
-    try {
-      const safety = await checkContentSafety(editBuffer);
-      if (safety.isInappropriate) {
-        onViolation(safety.reason);
-        return;
-      }
-    } catch (e) {}
-    onEditPost(postId, editBuffer);
-    setEditingPostId(null);
-  };
-
-  const handleDelete = (postId: string) => {
-    if (confirm("Permanently erase this signal from the metropolis?")) {
-      onDeletePost(postId);
+  const handleSaveEdit = async () => {
+    if (!editingPostId || !editBuffer.trim()) return;
+    const safety = await checkContentSafety(editBuffer);
+    if (safety.isInappropriate) {
+      onViolation(safety.reason);
+      return;
     }
+    onEditPost(editingPostId, editBuffer);
+    setEditingPostId(null);
   };
 
   const handleAddComment = (postId: string) => {
@@ -95,35 +107,151 @@ const MoodSection: React.FC<MoodSectionProps> = ({
     setCommentInputs(prev => ({ ...prev, [postId]: '' }));
   };
 
+  const handleReply = (postId: string, commentId: string) => {
+    if (!replyContent.trim()) return;
+    onCommentInteraction(postId, commentId, 'reply', replyContent);
+    setReplyContent('');
+    setReplyingTo(null);
+  };
+
+  const renderComment = (postId: string, comment: Comment, depth = 0) => (
+    <div key={comment.id} className={`mt-4 ${depth > 0 ? 'ml-6 md:ml-10 border-l-2 border-black/5 pl-4' : ''}`}>
+      <div className="flex items-start gap-3">
+        <div className="w-8 h-8 rounded-lg bg-custom text-white font-black flex items-center justify-center shrink-0 text-sm italic">{comment.author[0].toUpperCase()}</div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="font-black text-xs">@{comment.author}</span>
+            <span className="text-[8px] font-black opacity-30 uppercase tracking-widest">{new Date(comment.timestamp).toLocaleDateString()}</span>
+          </div>
+          <p className="text-sm font-bold opacity-80 mt-1 leading-relaxed">"{comment.text}"</p>
+          <div className="flex items-center gap-4 mt-2">
+            <button onClick={() => onCommentInteraction(postId, comment.id, 'heart')} className="flex items-center gap-1 text-[9px] font-black uppercase text-custom transition-transform active:scale-95"><Heart size={12} fill={comment.hearts > 0 ? "currentColor" : "none"} /> {comment.hearts} Sync</button>
+            <button 
+              onClick={() => setReplyingTo(replyingTo?.commentId === comment.id ? null : { postId, commentId: comment.id })} 
+              className="flex items-center gap-1 text-[9px] font-black uppercase text-blue-500 transition-transform active:scale-95"
+            >
+              <Reply size={12} /> Echo
+            </button>
+          </div>
+          
+          <AnimatePresence>
+            {replyingTo?.commentId === comment.id && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="mt-3 overflow-hidden">
+                <div className="flex gap-2">
+                  <input 
+                    autoFocus
+                    type="text" 
+                    value={replyContent} 
+                    onChange={e => setReplyContent(e.target.value)}
+                    placeholder="Echo back..."
+                    className={`flex-1 p-2 rounded-xl border-2 text-[10px] font-bold outline-none focus:border-custom ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-gray-50 border-gray-100'}`}
+                    onKeyPress={e => e.key === 'Enter' && handleReply(postId, comment.id)}
+                  />
+                  <button onClick={() => handleReply(postId, comment.id)} className="bg-custom text-white px-3 rounded-xl shadow-md transition-transform active:scale-95"><Send size={12} /></button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+      {comment.replies && comment.replies.map(reply => renderComment(postId, reply, depth + 1))}
+    </div>
+  );
+
+  const handleTeller = () => {
+    if (!tellerQuestion.trim()) return;
+    setIsTellerLoading(true);
+    setTimeout(() => {
+      const rand = Math.random();
+      let result = '';
+      if (rand < 0.2) result = 'YES. The stars have spoken!';
+      else if (rand < 0.4) result = 'NO. The frequency is blocked.';
+      else if (rand < 0.6) result = 'MAYBE. The vibes are still charging.';
+      else if (rand < 0.8) result = 'SUPER YES! The universe is screaming it!';
+      else result = 'SUPER NO! Not in this city, or any other.';
+      setTellerResponse(result);
+      setIsTellerLoading(false);
+    }, 1200);
+  };
+
+  const startQuiz = () => {
+    setQuizActive(true);
+    setQuizStep(0);
+    setQuizScores({ Happy: 0, Angry: 0, Tired: 0, Normal: 0, Excited: 0 });
+    setQuizResult(null);
+  };
+
+  const QUIZ_STEPS = [
+    { q: "How happy do you feel right now?", options: ["Very!", "A little", "Not much", "Not at all"], scores: ["Happy", "Normal", "Tired", "Angry"] },
+    { q: "Are you feeling sleepy?", options: ["No, I'm awake!", "A tiny bit", "I need a nap", "I'm a zombie"], scores: ["Excited", "Normal", "Tired", "Tired"] },
+    { q: "Are you mad at anyone?", options: ["No, I'm chill", "Just a bit", "Maybe one person", "I'm so angry!"], scores: ["Happy", "Normal", "Angry", "Angry"] },
+    { q: "Do you feel excited about today?", options: ["Yes, so much!", "Maybe a bit", "Not really", "Zero excitement"], scores: ["Excited", "Excited", "Normal", "Tired"] },
+    { q: "How fast is your brain working?", options: ["Super fast!", "Normal speed", "A bit slow", "It's stuck"], scores: ["Excited", "Normal", "Tired", "Normal"] },
+    { q: "Do you want to hug a pet?", options: ["Yes, please!", "Sure", "Not really", "No way"], scores: ["Happy", "Happy", "Normal", "Angry"] },
+    { q: "How much do you like today?", options: ["I love it!", "It's okay", "It's boring", "I hate it"], scores: ["Happy", "Normal", "Tired", "Angry"] },
+    { q: "Are you busy right now?", options: ["Very busy!", "A little bit", "Not at all", "I'm bored"], scores: ["Excited", "Normal", "Happy", "Tired"] },
+    { q: "Do you feel like dancing?", options: ["Yes, right now!", "Maybe later", "No, too tired", "Not my vibe"], scores: ["Excited", "Happy", "Tired", "Normal"] },
+    { q: "Pick your favorite color!", options: ["Yellow", "Blue", "Red", "Green"], scores: ["Happy", "Tired", "Angry", "Normal"] }
+  ];
+
+  const handleQuizChoice = (idx: number) => {
+    const currentStep = QUIZ_STEPS[quizStep];
+    const moodKey = currentStep.scores[idx];
+    const updatedScores = { ...quizScores };
+    if (moodKey) {
+      updatedScores[moodKey] = (updatedScores[moodKey] || 0) + 1;
+      setQuizScores(updatedScores);
+    }
+    const nextStep = quizStep + 1;
+    if (nextStep < QUIZ_STEPS.length) {
+      setQuizStep(nextStep);
+    } else {
+      const sortedEntries = Object.entries(updatedScores).sort((a, b) => (b[1] as number) - (a[1] as number));
+      setQuizResult(sortedEntries[0][0]);
+    }
+  };
+
+  const formatTime = (ts: number) => {
+    const diff = Date.now() - ts;
+    if (diff < 60000) return 'Just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    return new Date(ts).toLocaleDateString();
+  };
+
   return (
     <div className="flex flex-col gap-6 pb-20 h-full min-h-0">
       <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 shrink-0">
-        {['Express', 'Mood Pet'].map((t) => (
-          <button key={t} onClick={() => setSubTab(t as any)} className={`px-6 py-3 rounded-full font-black text-[10px] md:text-xs transition-all whitespace-nowrap uppercase tracking-tighter border-b-4 ${subTab === t ? 'bg-custom border-black/20 text-white shadow-lg translate-y-[-2px]' : isDarkMode ? 'bg-slate-800 border-slate-900 text-white/30' : 'bg-white border-gray-100 text-slate-500'}`}>
+        {['Express', 'Teller', 'Scan', 'Mood Pet'].map((t) => (
+          <button key={t} onClick={() => setSubTab(t as any)} className={`px-5 py-2.5 rounded-full font-black text-[10px] md:text-xs transition-all whitespace-nowrap uppercase tracking-tighter border-b-4 ${subTab === t ? 'bg-custom border-black/20 text-white shadow-lg translate-y-[-2px]' : isDarkMode ? 'bg-slate-800 border-slate-900 text-white/30' : 'bg-white border-gray-100 text-slate-500'}`}>
             {t}
           </button>
         ))}
       </div>
 
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 relative">
         <AnimatePresence mode="wait">
           {subTab === 'Express' && (
-            <motion.div key="express" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+            <motion.div key="express" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full overflow-y-auto fading-scrollbar pr-2 space-y-6 pb-20">
               <div className={`p-6 md:p-8 rounded-[2.5rem] ${isDarkMode ? 'bg-slate-900' : 'bg-white'} border-4 border-black/5 shadow-xl`}>
                 <textarea 
                   value={postContent} 
                   onChange={(e) => setPostContent(e.target.value)} 
                   disabled={isBroadcasting}
-                  placeholder={isBroadcasting ? "Scanning Frequency..." : "Broadcast your mood..."} 
-                  className={`w-full ${isDarkMode ? 'bg-slate-800 text-white' : 'bg-gray-50 text-slate-900'} p-6 rounded-3xl border-2 border-black/5 focus:border-custom outline-none font-bold text-lg shadow-inner min-h-[120px] resize-none`} 
+                  placeholder={isBroadcasting ? "Scanning Signal..." : (postVisibility === 'global' ? "Transmit a global frequency..." : "Whisper to your circle...")} 
+                  className={`w-full ${isDarkMode ? 'bg-slate-800 text-white' : 'bg-gray-50 text-slate-900'} p-6 rounded-3xl border-2 border-black/5 focus:border-custom outline-none font-bold text-lg shadow-inner min-h-[120px]`} 
                 />
                 <div className="flex flex-wrap justify-between items-center mt-6 gap-4">
                   <div className="flex gap-2 bg-black/5 p-1.5 rounded-2xl">
                     <button onClick={() => setPostVisibility('global')} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${postVisibility === 'global' ? 'bg-custom text-white' : 'opacity-40'}`}><Globe size={14}/> GLOBAL</button>
                     <button onClick={() => setPostVisibility('circle')} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${postVisibility === 'circle' ? 'bg-custom text-white' : 'opacity-40'}`}><Users size={14}/> CIRCLE</button>
                   </div>
-                  <button onClick={handlePost} disabled={isBroadcasting} className="kahoot-shadow kahoot-button-custom px-8 py-4 text-white rounded-2xl font-black text-xs flex items-center gap-2 disabled:opacity-50">
-                    <Send size={18} /> {isBroadcasting ? 'SENDING...' : 'BROADCAST'}
+                  <button 
+                    onClick={handlePost} 
+                    disabled={isBroadcasting}
+                    className="kahoot-button-custom px-8 py-4 text-white rounded-2xl font-black text-xs flex items-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
+                  >
+                    {isBroadcasting ? <Clock size={18} className="animate-spin" /> : <Send size={18} />} 
+                    {isBroadcasting ? 'SCANNIG...' : 'BROADCAST'}
                   </button>
                 </div>
               </div>
@@ -134,99 +262,169 @@ const MoodSection: React.FC<MoodSectionProps> = ({
               </div>
 
               <div className="space-y-6 pb-12">
-                {filteredPosts.map(post => {
+                {filteredPosts.length > 0 ? filteredPosts.map(post => {
                   const isAuthor = post.author === user.username;
-                  const hasLiked = post.likedBy?.includes(user.username);
+                  const isLiked = post.likes.includes(user.username);
                   
                   return (
                     <motion.div key={post.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`p-6 rounded-[2rem] ${isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'} border-2 border-black/5 shadow-md`}>
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
-                          <button onClick={() => onNavigateToProfile(post.author)} className="w-10 h-10 rounded-xl bg-custom text-white font-black flex items-center justify-center italic shadow-sm">{post.author[0].toUpperCase()}</button>
+                          <button onClick={() => onNavigateToProfile(post.author)} className="w-10 h-10 rounded-xl bg-custom text-white font-black shrink-0 text-xl flex items-center justify-center italic shadow-sm">{post.author[0].toUpperCase()}</button>
                           <div>
                             <h4 className="font-black text-sm">@{post.author}</h4>
-                            <p className="text-[9px] font-black opacity-30 uppercase tracking-widest flex items-center gap-1"><Clock size={10}/> {new Date(post.timestamp).toLocaleDateString()}</p>
+                            <p className="text-[9px] font-black opacity-30 uppercase tracking-widest flex items-center gap-1"><Clock size={10}/> {formatTime(post.timestamp)}</p>
                           </div>
                         </div>
                         {isAuthor && (
                           <div className="flex gap-2">
-                             <button onClick={() => startEdit(post)} className="p-2 hover:bg-black/5 rounded-lg text-blue-500 transition-colors"><Edit2 size={16}/></button>
-                             <button onClick={() => handleDelete(post.id)} className="p-2 hover:bg-black/5 rounded-lg text-red-500 transition-colors"><Trash2 size={16}/></button>
+                             <button onClick={() => handleStartEdit(post)} className="p-2 bg-black/5 hover:bg-black/10 rounded-xl transition-all text-blue-500"><Edit size={16}/></button>
+                             <button onClick={() => onDeletePost(post.id)} className="p-2 bg-black/5 hover:bg-black/10 rounded-xl transition-all text-red-500"><Trash2 size={16}/></button>
                           </div>
                         )}
                       </div>
 
                       {editingPostId === post.id ? (
                         <div className="space-y-4 mb-6">
-                           <textarea value={editBuffer} onChange={e => setEditBuffer(e.target.value)} className={`w-full p-4 rounded-2xl border-2 font-bold ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-gray-50 border-gray-100'} outline-none focus:border-custom resize-none`} />
-                           <div className="flex gap-2 justify-end">
-                             <button onClick={() => setEditingPostId(null)} className="p-3 bg-gray-200 text-slate-600 rounded-xl font-black text-[10px] uppercase">Cancel</button>
-                             <button onClick={() => handleSaveEdit(post.id)} className="p-3 bg-custom text-white rounded-xl font-black text-[10px] uppercase flex items-center gap-2"><Check size={14}/> Save</button>
+                           <textarea value={editBuffer} onChange={e => setEditBuffer(e.target.value)} className={`w-full p-4 rounded-2xl border-2 font-bold ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-gray-50 border-gray-100 text-slate-900'} outline-none focus:border-custom`} rows={3} />
+                           <div className="flex gap-2">
+                             <button onClick={handleSaveEdit} className="bg-custom text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase shadow-md">Update Signal</button>
+                             <button onClick={() => setEditingPostId(null)} className="bg-black/5 px-4 py-2 rounded-xl font-black text-[10px] uppercase">Cancel</button>
                            </div>
                         </div>
                       ) : (
-                        <p className="text-base font-bold italic opacity-90 mb-4 leading-relaxed break-words">"{post.content}"</p>
+                        <>
+                          {post.isRepost && <div className="flex items-center gap-2 text-[10px] font-black text-green-500 uppercase italic mb-2"><Repeat size={12}/> Echoing: @{post.originalAuthor}</div>}
+                          <p className="text-base font-bold italic opacity-90 mb-6 leading-relaxed break-words">"{post.content}"</p>
+                        </>
                       )}
 
                       <div className="flex items-center gap-6 pt-4 border-t border-black/5">
-                        <div className="flex flex-col items-center">
-                          <button onClick={() => onHeart(post.id)} className={`flex items-center gap-1.5 font-black text-[10px] uppercase transition-all active:scale-125 ${hasLiked ? 'text-red-500' : 'text-custom'}`}>
-                            <Heart size={16} fill={hasLiked ? "currentColor" : "none"} /> {post.likedBy?.length || 0} SYNC
-                          </button>
-                          {post.likedBy && post.likedBy.length > 0 && (
-                            <button onClick={() => setShowLikersId(showLikersId === post.id ? null : post.id)} className="text-[7px] font-black uppercase opacity-20 hover:opacity-100 mt-1">Who Synced?</button>
-                          )}
+                        <div className="flex items-center gap-1.5">
+                           <button onClick={() => onHeart(post.id)} className={`flex items-center gap-1.5 ${isLiked ? 'text-custom' : 'opacity-40'} font-black text-[10px] uppercase transition-all active:scale-95`}>
+                             <Heart size={16} fill={isLiked ? "currentColor" : "none"} />
+                           </button>
+                           <button onClick={() => setLikersModalPost(post)} className="text-custom font-black text-[10px] hover:underline transition-all">
+                             {post.likes.length} SYNC
+                           </button>
                         </div>
-                        <button onClick={() => setExpandedPostId(expandedPostId === post.id ? null : post.id)} className="flex items-center gap-1.5 text-blue-500 font-black text-[10px] uppercase"><MessageSquare size={16} /> {post.comments?.length || 0} ECHOES</button>
-                        {!isAuthor && <button onClick={() => onRepost(post)} className="flex items-center gap-1.5 text-green-500 font-black text-[10px] uppercase"><Repeat size={16} /> RE-SYNC</button>}
+                        <button onClick={() => setExpandedPostId(expandedPostId === post.id ? null : post.id)} className="flex items-center gap-1.5 text-blue-500 font-black text-[10px] uppercase"><MessageSquare size={16} /> {post.comments?.length || 0} ECHO</button>
+                        <button onClick={() => onRepost(post)} className="flex items-center gap-1.5 text-green-500 font-black text-[10px] uppercase transition-transform active:scale-95"><Repeat size={16} /> ECHO RE-SIGNAL</button>
                       </div>
 
                       <AnimatePresence>
-                        {showLikersId === post.id && (
-                          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="mt-4 p-4 bg-black/5 rounded-2xl border-l-4 border-red-500/30 overflow-hidden">
-                             <p className="text-[8px] font-black uppercase opacity-40 mb-2 tracking-[0.2em]">Synchronized Citizens:</p>
-                             <div className="flex flex-wrap gap-2">
-                               {post.likedBy?.map(username => (
-                                 <span key={username} onClick={() => onNavigateToProfile(username)} className="px-3 py-1 bg-white/50 dark:bg-slate-800/50 rounded-full text-[9px] font-black border border-black/5 cursor-pointer hover:bg-white transition-colors">@{username}</span>
-                               ))}
-                             </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-
-                      <AnimatePresence>
                         {expandedPostId === post.id && (
-                          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="pt-6 space-y-4 overflow-hidden">
-                             <div className="flex gap-2">
-                               <input value={commentInputs[post.id] || ''} onChange={e => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))} placeholder="Add an echo..." className={`flex-1 p-3 rounded-xl border-2 text-xs font-bold outline-none focus:border-custom ${isDarkMode ? 'bg-slate-800' : 'bg-gray-50'}`} />
-                               <button onClick={() => handleAddComment(post.id)} className="bg-custom text-white px-4 rounded-xl shadow-md"><Send size={16} /></button>
+                          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                             <div className="pt-6 space-y-4">
+                                <div className="flex gap-2">
+                                  <input 
+                                    type="text" 
+                                    value={commentInputs[post.id] || ''} 
+                                    onChange={e => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
+                                    placeholder="Add an echo to this signal..." 
+                                    className={`flex-1 p-3 rounded-xl border-2 text-xs font-bold outline-none focus:border-custom ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-gray-50 border-gray-100'}`}
+                                    onKeyPress={e => e.key === 'Enter' && handleAddComment(post.id)}
+                                  />
+                                  <button onClick={() => handleAddComment(post.id)} className="bg-custom text-white px-4 rounded-xl shadow-md transition-transform active:scale-95"><Send size={16} /></button>
+                                </div>
+
+                                <div className="space-y-4 max-h-[400px] overflow-y-auto fading-scrollbar pr-2">
+                                  {post.comments?.length > 0 ? (
+                                    post.comments.map(c => renderComment(post.id, c))
+                                  ) : (
+                                    <p className="text-[10px] font-black uppercase opacity-20 text-center py-4 tracking-widest">No echoes yet.</p>
+                                  )}
+                                </div>
                              </div>
-                             {post.comments?.map(c => (
-                               <div key={c.id} className="flex gap-3 p-3 bg-black/5 rounded-2xl">
-                                  <div className="w-8 h-8 rounded-lg bg-custom/20 text-custom font-black flex items-center justify-center text-[10px]">{c.author[0]}</div>
-                                  <div>
-                                    <p className="text-[10px] font-black">@{c.author}</p>
-                                    <p className="text-xs font-bold opacity-80 leading-relaxed">"{c.text}"</p>
-                                  </div>
-                               </div>
-                             ))}
                           </motion.div>
                         )}
                       </AnimatePresence>
                     </motion.div>
                   );
-                })}
+                }) : <div className="py-20 text-center opacity-20 font-black uppercase italic text-lg tracking-widest">The metropolis is quiet.</div>}
               </div>
             </motion.div>
           )}
 
+          {subTab === 'Teller' && (
+            <motion.div key="teller" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={`h-full overflow-y-auto fading-scrollbar pr-2 p-10 rounded-[3rem] ${isDarkMode ? 'bg-slate-900' : 'bg-white'} border-4 border-black/5 shadow-xl text-center flex flex-col items-center pb-20`}>
+               <Sparkles className="mb-6 text-custom shrink-0" size={60} />
+               <h2 className="text-2xl md:text-4xl font-black mb-8 uppercase italic tracking-tighter shrink-0">Fortune Oracle</h2>
+               <input value={tellerQuestion} onChange={e => setTellerQuestion(e.target.value)} placeholder="Type a question for the stars..." className={`w-full max-w-xl p-5 rounded-2xl border-2 font-black text-center mb-6 outline-none focus:border-custom shadow-inner shrink-0 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-gray-50 border-gray-100'}`} />
+               <button onClick={handleTeller} disabled={isTellerLoading} className="kahoot-button-custom px-10 py-5 rounded-2xl text-white font-black uppercase text-sm shadow-lg active:scale-95 transition-transform shrink-0">{isTellerLoading ? 'CALCULATING...' : 'ASK THE STARS'}</button>
+               {tellerResponse && (
+                 <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="mt-8 p-6 rounded-3xl bg-custom/5 border-l-8 border-custom italic font-bold text-lg max-w-lg">
+                   "{tellerResponse}"
+                 </motion.div>
+               )}
+            </motion.div>
+          )}
+
+          {subTab === 'Scan' && (
+            <motion.div key="scan" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={`h-full overflow-y-auto fading-scrollbar pr-2 p-10 rounded-[3rem] ${isDarkMode ? 'bg-slate-900' : 'bg-white'} border-4 border-black/5 shadow-xl text-center flex flex-col items-center pb-20`}>
+               <Brain className="mb-6 text-blue-500 shrink-0" size={60} />
+               <h2 className="text-2xl md:text-4xl font-black mb-6 uppercase italic tracking-tighter shrink-0">Emotional Scan</h2>
+               {!quizActive ? (
+                 <>
+                   <p className="opacity-40 font-bold uppercase tracking-widest text-[10px] mb-10">See your mood signature in 10 quick steps</p>
+                   <button onClick={startQuiz} className="kahoot-button-blue px-10 py-5 rounded-2xl text-white font-black uppercase text-sm shadow-lg shrink-0">Start Scan</button>
+                 </>
+               ) : (
+                 <div className="w-full max-w-lg space-y-8">
+                   {quizResult ? (
+                     <div className="space-y-6">
+                        <div className="text-6xl mb-4">✨</div>
+                        <h3 className="text-2xl font-black italic uppercase">Scan Complete</h3>
+                        <div className="p-6 rounded-3xl bg-custom/10 border-2 border-custom/20">
+                          <p className="text-[10px] font-bold opacity-70 uppercase tracking-widest mb-2">Neural Signature</p>
+                          <p className="text-2xl font-black text-custom italic uppercase">{quizResult}</p>
+                        </div>
+                        <button onClick={() => setQuizActive(false)} className="kahoot-button-custom px-8 py-3 rounded-xl text-white font-black uppercase text-xs">Reset Scan</button>
+                     </div>
+                   ) : (
+                     <div className="space-y-8">
+                        <div className="h-2 bg-black/10 rounded-full overflow-hidden shrink-0"><motion.div className="h-full bg-blue-500" initial={{ width: 0 }} animate={{ width: `${((quizStep + 1) / QUIZ_STEPS.length) * 100}%` }} /></div>
+                        <p className="text-lg font-black italic">"{QUIZ_STEPS[quizStep].q}"</p>
+                        <div className="grid grid-cols-2 gap-4">
+                           {QUIZ_STEPS[quizStep].options.map((opt, i) => (
+                             <button key={opt} onClick={() => handleQuizChoice(i)} className="kahoot-button-custom py-4 rounded-xl text-white font-black uppercase text-[10px] active:scale-95 transition-transform">{opt}</button>
+                           ))}
+                        </div>
+                        <p className="text-[10px] font-black uppercase opacity-30">Step {quizStep + 1} of {QUIZ_STEPS.length}</p>
+                     </div>
+                   )}
+                 </div>
+               )}
+            </motion.div>
+          )}
+
           {subTab === 'Mood Pet' && (
-            <motion.div key="pet" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div key="pet" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full overflow-y-auto fading-scrollbar pr-2 pb-20">
                <MoodPetSection user={user} isDarkMode={isDarkMode} onUpdate={onUpdatePet} onPost={onPost} />
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+      {/* Likers Modal */}
+      <AnimatePresence>
+        {likersModalPost && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
+             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className={`w-full max-w-sm rounded-[3rem] p-8 ${isDarkMode ? 'bg-slate-900' : 'bg-white'} border-4 border-black/5 shadow-2xl relative`}>
+                <button onClick={() => setLikersModalPost(null)} className="absolute top-6 right-6 opacity-40 hover:opacity-100 transition-all"><X size={24}/></button>
+                <h3 className="text-xl font-black uppercase italic italic mb-6">Resonance Syncs</h3>
+                <div className="space-y-3 max-h-[300px] overflow-y-auto fading-scrollbar">
+                   {likersModalPost.likes.length > 0 ? likersModalPost.likes.map(liker => (
+                     <button key={liker} onClick={() => { onNavigateToProfile(liker); setLikersModalPost(null); }} className={`w-full p-3 rounded-2xl flex items-center gap-3 transition-all hover:bg-black/5`}>
+                       <div className="w-8 h-8 rounded-lg bg-custom text-white font-black flex items-center justify-center italic text-xs border-2 border-white/20 shrink-0">{liker[0].toUpperCase()}</div>
+                       <p className="text-[12px] font-black uppercase flex-1 text-left">@{liker}</p>
+                     </button>
+                   )) : <p className="text-xs font-bold opacity-30 uppercase text-center py-4">No one liked yet.</p>}
+                </div>
+             </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

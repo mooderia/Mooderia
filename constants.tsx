@@ -1,3 +1,4 @@
+
 import { ZodiacInfo, Badge, Mood } from './types';
 
 export const ZODIACS: ZodiacInfo[] = [
@@ -104,7 +105,7 @@ export const QUIZ_QUESTIONS = [
   { q: "How many zodiac signs belong to the Fire element?", options: ["2", "3", "4", "5"], a: 1 },
   { q: "What is the symbol for Sagittarius?", options: ["The Ram", "The Archer", "The Goat", "The Lion"], a: 1 },
   { q: "Which mood color is typically associated with Sadness in the check-in?", options: ["Red", "Yellow", "Blue", "Purple"], a: 2 },
-  { q: "How many elements are the zodiac signs divided into?", options: ["2", "3", "4", "5"], a: 2 },
+  { q: "Who is the city's psychiatrist?", options: ["Sir Clark", "Dr. Pinel", "Dr. Vibe", "Citizen X"], a: 1 },
   { q: "What is the maximum value for a pet's Hunger bar?", options: ["50", "100", "150", "200"], a: 1 },
   { q: "Which zodiac sign starts on March 21st?", options: ["Pisces", "Taurus", "Aries", "Gemini"], a: 2 },
   { q: "What happens to the pet stats when they sleep?", options: ["They drain faster", "They stay frozen", "The Rest bar fills", "They reset to zero"], a: 2 },
