@@ -71,8 +71,7 @@ export interface Message {
   read: boolean;
   reactions?: MessageReaction[];
   isGroup?: boolean;
-  isSystem?: boolean; // For "X left the group" messages
-  recipients?: string[]; // (Deprecated for new logic but kept for compat)
+  isSystem?: boolean; 
   groupName?: string;
   replyToId?: string;
   replyToText?: string;
@@ -94,7 +93,7 @@ export interface Post {
   id: string;
   author: string;
   content: string;
-  likes: string[]; // Updated from 'hearts: number' to track who liked it
+  likes: string[]; 
   comments: Comment[];
   timestamp: number;
   isRepost?: boolean;
