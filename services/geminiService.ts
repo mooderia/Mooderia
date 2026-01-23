@@ -1,7 +1,19 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const getApiKey = (): string => {
+  const k =
+    (import.meta as any).env?.VITE_GEMINI_API_KEY ||
+    (import.meta as any).env?.GEMINI_API_KEY ||
+    (process.env as any)?.GEMINI_API_KEY ||
+    (process.env as any)?.API_KEY;
+  if (!k) {
+    throw new Error("Gemini API key missing. Set VITE_GEMINI_API_KEY in environment.");
+  }
+  return k;
+};
+
+const ai = new GoogleGenAI({ apiKey: getApiKey() });
 
 export const getPsychiatristResponse = async (message: string) => {
   const response = await ai.models.generateContent({
