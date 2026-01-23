@@ -134,7 +134,6 @@ const App: React.FC = () => {
         const updated = [...prev];
         const idx = updated.findIndex(u => u.username === currentUser.username);
         if (idx > -1) {
-          // Merge lists carefully
           updated[idx] = { ...updated[idx], ...currentUser };
         } else {
           updated.push(currentUser);
@@ -232,12 +231,10 @@ const App: React.FC = () => {
     setAllMessages(prev => [...prev, newMessage]);
   };
 
-  // Fix: Added handleGroupUpdate to update group information in the state
   const handleGroupUpdate = (group: Group) => {
     setAllGroups(prev => prev.map(g => g.id === group.id ? group : g));
   };
 
-  // Fix: Added handleGroupCreate to add a new group to the state
   const handleGroupCreate = (group: Group) => {
     setAllGroups(prev => [...prev, group]);
   };
@@ -471,6 +468,7 @@ const App: React.FC = () => {
               <CityHallSection 
                 isDarkMode={isDarkMode} 
                 currentUser={currentUser!} 
+                allUsers={allUsers}
                 messages={allMessages} 
                 groups={allGroups}
                 onSendMessage={handleSendMessage} 

@@ -7,6 +7,7 @@ import { checkContentSafety } from '../services/geminiService';
 interface CityHallSectionProps {
   isDarkMode: boolean;
   currentUser: User;
+  allUsers: User[];
   messages: Message[];
   groups: Group[];
   onSendMessage: (recipient: string, text: string, options?: { isGroup?: boolean, recipients?: string[], groupName?: string, replyToId?: string, replyToText?: string, replyToSender?: string, isSystem?: boolean, liaisonData?: any }) => void;
@@ -20,7 +21,7 @@ interface CityHallSectionProps {
 
 const REACTION_EMOJIS = ['❤️', '😂', '😮', '😢', '🔥', '👍'];
 
-const CityHallSection: React.FC<CityHallSectionProps> = ({ isDarkMode, currentUser, messages, groups, onSendMessage, onReadMessages, onGroupUpdate, onGroupCreate, onNavigateToProfile, onReactToMessage, onViolation }) => {
+const CityHallSection: React.FC<CityHallSectionProps> = ({ isDarkMode, currentUser, allUsers, messages, groups, onSendMessage, onReadMessages, onGroupUpdate, onGroupCreate, onNavigateToProfile, onReactToMessage, onViolation }) => {
   const [input, setInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCitizen, setSelectedCitizen] = useState<{ username: string, displayName: string, profilePic?: string, isGroup?: boolean, recipients?: string[] } | null>(null);
@@ -33,8 +34,7 @@ const CityHallSection: React.FC<CityHallSectionProps> = ({ isDarkMode, currentUs
   const [selectedForGroup, setSelectedForGroup] = useState<string[]>([]);
   
   const chatEndRef = useRef<HTMLDivElement>(null);
-
-  const allUsers: User[] = useMemo(() => JSON.parse(localStorage.getItem('mooderia_all_users') || '[]'), [isCreatingGroup]);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
 
   const chats = useMemo(() => {
     const list: any[] = [];
@@ -79,10 +79,28 @@ const CityHallSection: React.FC<CityHallSectionProps> = ({ isDarkMode, currentUs
     ).sort((a, b) => a.timestamp - b.timestamp);
   }, [messages, selectedCitizen, currentUser.username]);
 
+  // Handle switching conversations and new messages
   useEffect(() => {
     if (selectedCitizen && !selectedCitizen.isGroup) onReadMessages(selectedCitizen.username);
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [selectedCitizen, messages.length]);
+    
+    // Smooth scroll to bottom on initial load and when switching
+    setTimeout(() => {
+        chatScrollRef.current?.scrollTo({
+            top: chatScrollRef.current.scrollHeight,
+            behavior: 'smooth'
+        });
+    }, 50);
+  }, [selectedCitizen?.username]);
+
+  // Auto-scroll for new incoming messages
+  useEffect(() => {
+    if (chatMessages.length > 0) {
+        chatScrollRef.current?.scrollTo({
+            top: chatScrollRef.current.scrollHeight,
+            behavior: 'smooth'
+        });
+    }
+  }, [chatMessages.length]);
 
   const handleSend = async () => {
     if (!input.trim() || !selectedCitizen || isSending) return;
@@ -146,7 +164,7 @@ const CityHallSection: React.FC<CityHallSectionProps> = ({ isDarkMode, currentUs
       </div>
 
       <div className={`flex-1 flex flex-col md:flex-row rounded-[3rem] ${isDarkMode ? 'bg-slate-900' : 'bg-white'} shadow-2xl overflow-hidden border-4 border-black/5 relative min-h-0 h-full`}>
-        {/* Citizen List / Sidebar */}
+        {/* Citizen List / Sidebar - Independent Scroll */}
         <div className={`w-full md:w-64 lg:w-80 border-r ${isDarkMode ? 'border-slate-800' : 'border-gray-100'} flex flex-col ${selectedCitizen ? 'hidden md:flex' : 'flex'} min-h-0 h-full`}>
           <div className="p-4 border-b border-gray-100 dark:border-slate-800 shrink-0">
             <div className="relative">
@@ -154,7 +172,7 @@ const CityHallSection: React.FC<CityHallSectionProps> = ({ isDarkMode, currentUs
               <Search className={`absolute left-3.5 top-1/2 -translate-y-1/2 opacity-30`} size={16} />
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto fading-scrollbar p-3 space-y-2 min-h-0">
+          <div className="flex-1 overflow-y-auto fading-scrollbar p-3 space-y-2 min-h-0 h-full">
             {filteredChats.map(u => (
               <button key={u.username} onClick={() => setSelectedCitizen(u)} className={`w-full p-4 rounded-[1.5rem] flex items-center gap-3 transition-all border-b-4 active:translate-y-0.5 active:border-b-2 ${selectedCitizen?.username === u.username ? 'bg-blue-600 border-blue-800 text-white shadow-md' : 'hover:bg-black/5'}`}>
                 <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-slate-700 flex items-center justify-center font-black overflow-hidden shadow-sm shrink-0">
@@ -169,14 +187,14 @@ const CityHallSection: React.FC<CityHallSectionProps> = ({ isDarkMode, currentUs
           </div>
         </div>
 
-        {/* Message Window Area */}
+        {/* Message Window Area - Fixed Height with Scrollable List */}
         <div className={`flex-1 flex flex-col min-h-0 h-full ${!selectedCitizen ? 'hidden md:flex' : 'flex'}`}>
           {selectedCitizen ? (
             <>
               <div className={`p-4 border-b ${isDarkMode ? 'bg-slate-800/50 border-slate-800' : 'bg-gray-50/50 border-gray-100'} flex items-center justify-between shrink-0`}>
                 <div className="flex items-center gap-4">
                   <button onClick={() => setSelectedCitizen(null)} className="md:hidden p-2"><ArrowLeft size={20} /></button>
-                  <button onClick={() => !selectedCitizen.isGroup && onNavigateToProfile(selectedCitizen.username)} className="flex items-center gap-3">
+                  <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black shadow-lg overflow-hidden border-2 border-white/20">
                       {selectedCitizen.profilePic ? <img src={selectedCitizen.profilePic} className="w-full h-full object-cover" /> : selectedCitizen.displayName[0]}
                     </div>
@@ -184,12 +202,15 @@ const CityHallSection: React.FC<CityHallSectionProps> = ({ isDarkMode, currentUs
                       <p className={`font-black text-sm uppercase italic tracking-tighter ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{selectedCitizen.displayName}</p>
                       <p className="text-[10px] font-black uppercase tracking-widest opacity-30">@{selectedCitizen.username}</p>
                     </div>
-                  </button>
+                  </div>
                 </div>
               </div>
 
-              {/* Message List - Scrollable */}
-              <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 fading-scrollbar min-h-0 h-full bg-slate-50/30 dark:bg-slate-900/10">
+              {/* Message List - The strictly scrollable part */}
+              <div 
+                ref={chatScrollRef}
+                className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 fading-scrollbar min-h-0 h-full bg-slate-50/30 dark:bg-slate-900/10"
+              >
                 {chatMessages.length > 0 ? chatMessages.map(m => {
                   const isMe = m.sender === currentUser.username;
                   return (
@@ -208,7 +229,7 @@ const CityHallSection: React.FC<CityHallSectionProps> = ({ isDarkMode, currentUs
                           <div className={`px-5 py-3 rounded-[1.5rem] font-bold text-sm border-b-4 ${isMe ? 'bg-blue-600 border-blue-800 text-white rounded-tr-none' : isDarkMode ? 'bg-slate-800 border-slate-900 text-white rounded-tl-none' : 'bg-white border-gray-200 text-slate-800 rounded-tl-none'}`}>
                             <p className="break-words max-w-[250px] md:max-w-md">{m.text}</p>
                           </div>
-                          <div className={`flex flex-col gap-1 opacity-0 group-hover/bubble:opacity-100 transition-all`}>
+                          <div className={`flex flex-col gap-1 opacity-0 group-hover/bubble:opacity-100 transition-all shrink-0`}>
                             <button onClick={() => setReplyingTo(m)} className="p-1.5 bg-black/5 rounded-lg hover:bg-black/10 text-blue-500"><Reply size={14}/></button>
                             <button onClick={() => setReactionPickerMsgId(reactionPickerMsgId === m.id ? null : m.id)} className="p-1.5 bg-black/5 rounded-lg hover:bg-black/10 text-yellow-500"><Smile size={14}/></button>
                           </div>
@@ -251,7 +272,7 @@ const CityHallSection: React.FC<CityHallSectionProps> = ({ isDarkMode, currentUs
                 <div ref={chatEndRef} />
               </div>
 
-              {/* Footer Input Area */}
+              {/* Footer Input Area - Always Fixed at Bottom */}
               <div className="shrink-0 border-t border-gray-100 dark:border-slate-800">
                 <AnimatePresence>
                   {replyingTo && (
@@ -276,7 +297,7 @@ const CityHallSection: React.FC<CityHallSectionProps> = ({ isDarkMode, currentUs
               </div>
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-12 text-center opacity-20">
+            <div className="flex-1 flex flex-col items-center justify-center p-12 text-center opacity-20 h-full">
               <Radio size={80} className="mb-6 animate-pulse" />
               <h3 className="text-3xl font-black uppercase italic tracking-tighter mb-4">Neural Hub</h3>
               <p className="text-xs font-black uppercase tracking-widest">Select a signal frequency to start communicating</p>
@@ -295,7 +316,7 @@ const CityHallSection: React.FC<CityHallSectionProps> = ({ isDarkMode, currentUs
               <div className="space-y-2 max-h-[300px] overflow-y-auto fading-scrollbar">
                 {viewingReacters.users.map(u => (
                   <button key={u} onClick={() => { onNavigateToProfile(u); setViewingReacters(null); }} className="w-full p-3 rounded-2xl flex items-center gap-3 hover:bg-black/5 transition-all">
-                    <div className="w-8 h-8 rounded-lg bg-custom text-white font-black flex items-center justify-center italic text-xs border-2 border-white/20">{u[0].toUpperCase()}</div>
+                    <div className="w-8 h-8 rounded-lg bg-custom text-white font-black flex items-center justify-center italic text-xs border-2 border-white/20 shrink-0">{u[0].toUpperCase()}</div>
                     <p className="text-[12px] font-black uppercase text-left">@{u}</p>
                   </button>
                 ))}
