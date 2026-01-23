@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Users, Search, MessageSquare, ArrowLeft, ShieldCheck, Check, CheckCheck, Clock, Smile, Plus, X, Reply, CornerDownRight, Settings, Camera, LogOut, Globe, Crown, Zap, ExternalLink, Radio } from 'lucide-react';
@@ -273,7 +272,10 @@ const CityHallSection: React.FC<CityHallSectionProps> = ({ isDarkMode, currentUs
                 <div className={`p-4 md:p-5 border-b ${isDarkMode ? 'bg-slate-800/50 border-slate-800' : 'bg-gray-50/50 border-gray-100'} flex items-center justify-between shrink-0`}>
                   <div className="flex items-center gap-4">
                     <button onClick={() => setSelectedCitizen(null)} className="md:hidden p-2 rounded-xl hover:bg-black/5 text-slate-500 transition-colors"><ArrowLeft size={20} /></button>
-                    <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => !selectedCitizen.isGroup && onNavigateToProfile(selectedCitizen.username)}
+                      className={`flex items-center gap-3 ${!selectedCitizen.isGroup ? 'hover:opacity-80 transition-opacity' : 'cursor-default'}`}
+                    >
                       <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black shadow-lg overflow-hidden border-2 border-white/20">
                         {selectedCitizen.isGroup ? (selectedCitizen.profilePic && selectedCitizen.profilePic.length < 5 ? <span className="text-xl">{selectedCitizen.profilePic}</span> : <Users size={24} />) : (selectedCitizen.profilePic ? <img src={selectedCitizen.profilePic} className="w-full h-full object-cover" /> : selectedCitizen.displayName[0])}
                       </div>
@@ -281,7 +283,7 @@ const CityHallSection: React.FC<CityHallSectionProps> = ({ isDarkMode, currentUs
                         <p className={`font-black text-sm md:text-base uppercase italic tracking-tighter ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{selectedCitizen.displayName}</p>
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-30 leading-none mt-1">{selectedCitizen.isGroup ? 'Network Frequency' : 'Direct Sync'}</p>
                       </div>
-                    </div>
+                    </button>
                   </div>
                 </div>
 
@@ -308,11 +310,18 @@ const CityHallSection: React.FC<CityHallSectionProps> = ({ isDarkMode, currentUs
 
                         return (
                           <div key={m.id} className={`flex ${isMe ? 'flex-row-reverse' : 'flex-row'} items-end gap-3 group/msg relative mb-2`}>
-                            <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl bg-custom text-white font-black flex items-center justify-center shrink-0 border-2 border-white/20 shadow-md overflow-hidden text-xs`}>
+                            <button 
+                              onClick={() => onNavigateToProfile(m.sender)}
+                              className={`w-8 h-8 md:w-10 md:h-10 rounded-xl bg-custom text-white font-black flex items-center justify-center shrink-0 border-2 border-white/20 shadow-md overflow-hidden text-xs active:scale-95 transition-transform`}
+                            >
                                {senderPhoto ? <img src={senderPhoto} className="w-full h-full object-cover" /> : m.sender[0].toUpperCase()}
-                            </div>
+                            </button>
                             <div className={`max-w-[80%] md:max-w-[70%] space-y-1 flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                              {!isMe && selectedCitizen.isGroup && <span className="text-[10px] font-black uppercase opacity-30 ml-1 mb-1">{senderNickname}</span>}
+                              {!isMe && selectedCitizen.isGroup && (
+                                <button onClick={() => onNavigateToProfile(m.sender)} className="text-[10px] font-black uppercase opacity-30 ml-1 mb-1 hover:text-custom transition-colors">
+                                  {senderNickname}
+                                </button>
+                              )}
                               <div className={`relative px-5 py-3.5 rounded-[1.5rem] font-bold text-sm md:text-base border-b-4 ${isMe ? 'bg-blue-600 border-blue-800 text-white rounded-tr-none' : isDarkMode ? 'bg-slate-800 border-slate-900 text-white rounded-tl-none' : 'bg-gray-100 border-gray-200 text-slate-800 rounded-tl-none'}`}>
                                 <p className="leading-relaxed">{m.text}</p>
                               </div>

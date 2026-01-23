@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Send, Sparkles, Brain, Clock, Globe, Users, Trophy, MessageSquare, Repeat, Reply, ShieldAlert, Activity, Stethoscope, Trash2, Edit, X } from 'lucide-react';
@@ -117,10 +116,10 @@ const MoodSection: React.FC<MoodSectionProps> = ({ user, posts, onPost, onHeart,
   const renderComment = (postId: string, comment: Comment, depth = 0) => (
     <div key={comment.id} className={`mt-4 ${depth > 0 ? 'ml-6 md:ml-10 border-l-2 border-black/5 pl-4' : ''}`}>
       <div className="flex items-start gap-3">
-        <div className="w-8 h-8 rounded-lg bg-custom text-white font-black flex items-center justify-center shrink-0 text-sm italic">{comment.author[0].toUpperCase()}</div>
+        <button onClick={() => onNavigateToProfile(comment.author)} className="w-8 h-8 rounded-lg bg-custom text-white font-black flex items-center justify-center shrink-0 text-sm italic active:scale-95 transition-transform">{comment.author[0].toUpperCase()}</button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-black text-xs">@{comment.author}</span>
+            <button onClick={() => onNavigateToProfile(comment.author)} className="font-black text-xs hover:text-custom transition-colors">@{comment.author}</button>
             <span className="text-[8px] font-black opacity-30 uppercase tracking-widest">{new Date(comment.timestamp).toLocaleDateString()}</span>
           </div>
           <p className="text-sm font-bold opacity-80 mt-1 leading-relaxed">"{comment.text}"</p>
@@ -270,9 +269,9 @@ const MoodSection: React.FC<MoodSectionProps> = ({ user, posts, onPost, onHeart,
                     <motion.div key={post.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`p-6 rounded-[2rem] ${isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'} border-2 border-black/5 shadow-md`}>
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
-                          <button onClick={() => onNavigateToProfile(post.author)} className="w-10 h-10 rounded-xl bg-custom text-white font-black shrink-0 text-xl flex items-center justify-center italic shadow-sm">{post.author[0].toUpperCase()}</button>
+                          <button onClick={() => onNavigateToProfile(post.author)} className="w-10 h-10 rounded-xl bg-custom text-white font-black shrink-0 text-xl flex items-center justify-center italic shadow-sm active:scale-95 transition-transform">{post.author[0].toUpperCase()}</button>
                           <div>
-                            <h4 className="font-black text-sm">@{post.author}</h4>
+                            <button onClick={() => onNavigateToProfile(post.author)} className="font-black text-sm hover:text-custom transition-colors">@{post.author}</button>
                             <p className="text-[9px] font-black opacity-30 uppercase tracking-widest flex items-center gap-1"><Clock size={10}/> {formatTime(post.timestamp)}</p>
                           </div>
                         </div>
@@ -412,7 +411,7 @@ const MoodSection: React.FC<MoodSectionProps> = ({ user, posts, onPost, onHeart,
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
              <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className={`w-full max-w-sm rounded-[3rem] p-8 ${isDarkMode ? 'bg-slate-900' : 'bg-white'} border-4 border-black/5 shadow-2xl relative`}>
                 <button onClick={() => setLikersModalPost(null)} className="absolute top-6 right-6 opacity-40 hover:opacity-100 transition-all"><X size={24}/></button>
-                <h3 className="text-xl font-black uppercase italic italic mb-6">Resonance Syncs</h3>
+                <h3 className="text-xl font-black uppercase italic mb-6">Resonance Syncs</h3>
                 <div className="space-y-3 max-h-[300px] overflow-y-auto fading-scrollbar">
                    {likersModalPost.likes.length > 0 ? likersModalPost.likes.map(liker => (
                      <button key={liker} onClick={() => { onNavigateToProfile(liker); setLikersModalPost(null); }} className={`w-full p-3 rounded-2xl flex items-center gap-3 transition-all hover:bg-black/5`}>
