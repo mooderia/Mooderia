@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Mood, Section, Post, Comment, Message, Notification, MessageReaction, Group } from './types';
@@ -55,7 +54,7 @@ const App: React.FC = () => {
     if (currentUser && viewingUsername === currentUser.username) return currentUser;
     const allUsers: User[] = JSON.parse(localStorage.getItem('mooderia_all_users') || '[]');
     return allUsers.find(u => u.username === viewingUsername) || null;
-  }, [viewingUsername, currentUser, globalUpdateToggle, allPosts]);
+  }, [viewingUsername, currentUser, globalUpdateToggle]);
 
   const addNotification = useCallback((recipient: string, type: Notification['type'], snippet: string, postId: string = '') => {
     if (!currentUser) return;
@@ -109,7 +108,6 @@ const App: React.FC = () => {
       }
     }
 
-    // Migrate old posts that might still have hearts as number
     const parsedPosts: any[] = JSON.parse(savedPosts);
     const migratedPosts: Post[] = parsedPosts.map(p => ({
       ...p,
@@ -258,7 +256,7 @@ const App: React.FC = () => {
       id: Math.random().toString(36).substr(2, 9),
       author: currentUser.username,
       content: post.content,
-      likes: [], // Reposts start fresh with likes
+      likes: [], 
       comments: [],
       timestamp: Date.now(),
       isRepost: true,
@@ -273,23 +271,60 @@ const App: React.FC = () => {
 
   const handleFollow = (targetUsername: string) => {
     if (!currentUser || currentUser.username === targetUsername) return;
+    
+    const allUsers: User[] = JSON.parse(localStorage.getItem('mooderia_all_users') || '[]');
+    const targetIdx = allUsers.findIndex(u => u.username === targetUsername);
     const isFollowing = currentUser.following.includes(targetUsername);
+    
     if (isFollowing) {
-      setCurrentUser({ ...currentUser, following: currentUser.following.filter(u => u !== targetUsername) });
+      // Unfollow
+      const newFollowing = currentUser.following.filter(u => u !== targetUsername);
+      setCurrentUser({ ...currentUser, following: newFollowing });
+      
+      if (targetIdx > -1) {
+        allUsers[targetIdx].followers = (allUsers[targetIdx].followers || []).filter(f => f !== currentUser.username);
+        localStorage.setItem('mooderia_all_users', JSON.stringify(allUsers));
+      }
     } else {
-      setCurrentUser({ ...currentUser, following: [...currentUser.following, targetUsername] });
+      // Follow
+      const newFollowing = [...currentUser.following, targetUsername];
+      setCurrentUser({ ...currentUser, following: newFollowing });
+      
+      if (targetIdx > -1) {
+        allUsers[targetIdx].followers = [...(allUsers[targetIdx].followers || []), currentUser.username];
+        localStorage.setItem('mooderia_all_users', JSON.stringify(allUsers));
+      }
+      
       addNotification(targetUsername, 'follow', '');
     }
+    // Increment toggle to refresh profileToView memo
+    setGlobalUpdateToggle(t => t + 1);
   };
 
   const handleBlock = (targetUsername: string) => {
     if (!currentUser || currentUser.username === targetUsername) return;
+    
+    const newBlocked = [...currentUser.blockedUsers, targetUsername];
+    const newFollowing = currentUser.following.filter(u => u !== targetUsername);
+    const newFollowers = currentUser.followers.filter(u => u !== targetUsername);
+    
     setCurrentUser({
       ...currentUser,
-      blockedUsers: [...currentUser.blockedUsers, targetUsername],
-      following: currentUser.following.filter(u => u !== targetUsername),
-      followers: currentUser.followers.filter(u => u !== targetUsername)
+      blockedUsers: newBlocked,
+      following: newFollowing,
+      followers: newFollowers
     });
+    
+    // Also remove from target's followers if we were following them
+    const allUsers: User[] = JSON.parse(localStorage.getItem('mooderia_all_users') || '[]');
+    const targetIdx = allUsers.findIndex(u => u.username === targetUsername);
+    if (targetIdx > -1) {
+      allUsers[targetIdx].followers = (allUsers[targetIdx].followers || []).filter(f => f !== currentUser.username);
+      // Also remove target from current user's followers list if they followed us
+      allUsers[targetIdx].following = (allUsers[targetIdx].following || []).filter(f => f !== currentUser.username);
+      localStorage.setItem('mooderia_all_users', JSON.stringify(allUsers));
+    }
+    setGlobalUpdateToggle(t => t + 1);
   };
 
   const updatePetStats = (hunger: number, thirst: number, rest: number, coins: number, exp: number = 0, sleepUntil: number | null = null, newEmoji?: string, markChosen?: boolean, newName?: string, gameCooldownId?: string) => {
@@ -389,7 +424,6 @@ const App: React.FC = () => {
     );
   }
 
-  // Determine if section should scroll natively or be app-like (fixed)
   const isFixedSection = activeSection === 'CityHall' || activeSection === 'Mood';
 
   return (
@@ -520,7 +554,10 @@ const App: React.FC = () => {
                 onToggleDarkMode={() => setIsDarkMode(!isDarkMode)} 
                 onLogout={handleLogout} 
                 user={currentUser!} 
-                onUnblock={(u) => setCurrentUser({...currentUser!, blockedUsers: currentUser!.blockedUsers.filter(b => b !== u)})} 
+                onUnblock={(u) => {
+                  const newBlocked = currentUser!.blockedUsers.filter(b => b !== u);
+                  setCurrentUser({...currentUser!, blockedUsers: newBlocked});
+                }} 
               />
             )}
           </motion.div>
