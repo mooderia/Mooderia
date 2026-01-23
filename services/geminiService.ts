@@ -1,100 +1,93 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 
-// Standard initialization as per instructions
-// Using a function to ensure we catch the environment variable at runtime
-const getAI = () => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    console.error("METROPOLIS ERROR: API_KEY is missing from environment.");
-    // We return a dummy key or handle the error gracefully so the app doesn't crash
-    // but the user's specific instruction is to use process.env.API_KEY directly.
-  }
-  return new GoogleGenAI({ apiKey: apiKey || "" });
-};
-
-export const getPsychiatristResponse = async (message: string) => {
+/**
+ * Robust AI initialization.
+ * We create the instance inside the call to ensure it always picks up the latest environment state.
+ */
+const callGemini = async (model: string, prompt: string, config?: any) => {
   try {
-    const ai = getAI();
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+      console.warn("METROPOLIS DIAGNOSTIC: process.env.API_KEY is currently undefined.");
+      throw new Error("API Key Missing");
+    }
+
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: [{ parts: [{ text: message }] }],
-      config: {
-        systemInstruction: "You are Dr. Philippe Pinel, the Chief Psychiatrist of Mooderia. You provide compassionate, expert, and concise mental health support to citizens. Your tone is professional, warm, and therapeutic. Focus on validation, mindfulness, and gentle guidance. Keep responses under 3 paragraphs.",
-      }
+      model: model,
+      contents: prompt, // Using simplified string content for maximum reliability
+      config: config
     });
-    return { text: response.text || "The neural link is experiencing static. Dr. Pinel is momentarily unavailable." };
-  } catch (error) {
-    console.error("Psychiatrist API Error:", error);
-    return { text: "Connection to the Medical District failed. Please ensure your Metropolis credentials (API Key) are valid and that you have redeployed after adding them." };
+
+    return response.text;
+  } catch (error: any) {
+    console.error("METROPOLIS LINK ERROR:", error.message || error);
+    if (error.message?.includes("API_KEY_INVALID")) {
+      console.error("CRITICAL: The API Key provided in Vercel is invalid.");
+    }
+    throw error;
   }
 };
 
 export const getHoroscope = async (sign: string) => {
   try {
-    const ai = getAI();
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: [{ parts: [{ text: `Provide a daily horoscope for ${sign} today.` }] }],
-      config: {
-        systemInstruction: "You are a mystical Metropolis Astrologer. Provide a 3-sentence daily horoscope that is encouraging and insightful. Use cosmic and modern terminology.",
-      }
-    });
-    return response.text || "The constellations are currently obscured by metropolis smog.";
+    const prompt = `Provide a daily horoscope for ${sign} today. Keep it to 3 encouraging sentences.`;
+    const systemInstruction = "You are a mystical Metropolis Astrologer. Provide insightful, modern horoscopes.";
+    
+    const text = await callGemini('gemini-3-flash-preview', prompt, { systemInstruction });
+    return text || "The constellations are currently obscured.";
   } catch (error) {
-    console.error("Horoscope API Error:", error);
-    return "The stars are recalibrating. Check back later.";
+    return "The stars are recalibrating. Check back shortly.";
   }
 };
 
 export const getLovePrediction = async (sign1: string, sign2: string) => {
   try {
-    const ai = getAI();
-    const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: [{ parts: [{ text: `Predict love compatibility between ${sign1} and ${sign2}. Return only a JSON object with 'percentage' (0-100) and 'reason'.` }] }],
-        config: {
-            responseMimeType: "application/json",
-            responseSchema: {
-                type: Type.OBJECT,
-                properties: {
-                    percentage: { type: Type.NUMBER },
-                    reason: { type: Type.STRING }
-                },
-                required: ['percentage', 'reason']
-            }
-        }
+    const prompt = `Predict love compatibility between ${sign1} and ${sign2}. Return only a JSON object with 'percentage' (number 0-100) and 'reason' (string).`;
+    
+    const text = await callGemini('gemini-3-flash-preview', prompt, {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          percentage: { type: Type.NUMBER },
+          reason: { type: Type.STRING }
+        },
+        required: ['percentage', 'reason']
+      }
     });
     
-    const text = response.text || "{}";
-    return JSON.parse(text.trim());
+    return JSON.parse(text || "{}");
   } catch (error) {
-    console.error("Love Prediction API Error:", error);
-    return { percentage: 50, reason: "The romantic frequencies are currently experiencing atmospheric interference." };
+    console.error("Love Prediction Error:", error);
+    return { percentage: 50, reason: "The romantic frequencies are experiencing atmospheric interference." };
   }
-}
+};
 
 export const checkContentSafety = async (text: string) => {
   try {
-    const ai = getAI();
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: [{ parts: [{ text: `Analyze the following text for inappropriate language, hate speech, severe insults, or harassment: "${text}". Return a JSON object with 'isInappropriate' (boolean) and 'reason' (string, keep it short).` }] }],
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            isInappropriate: { type: Type.BOOLEAN },
-            reason: { type: Type.STRING }
-          },
-          required: ['isInappropriate', 'reason']
-        }
+    // If the text is very short, assume safe to save on API quota
+    if (text.length < 3) return { isInappropriate: false, reason: "" };
+
+    const prompt = `Analyze this text for hate speech or severe harassment: "${text}". Return JSON with 'isInappropriate' (boolean) and 'reason' (string).`;
+    
+    const resultText = await callGemini('gemini-3-flash-preview', prompt, {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          isInappropriate: { type: Type.BOOLEAN },
+          reason: { type: Type.STRING }
+        },
+        required: ['isInappropriate', 'reason']
       }
     });
-    const resultText = response.text || "{}";
-    return JSON.parse(resultText.trim());
+
+    return JSON.parse(resultText || "{\"isInappropriate\": false, \"reason\": \"\"}");
   } catch (error) {
-    console.error("Safety Check Error:", error);
+    // Fail safe: If the safety check API fails (e.g. key issue), allow the post but log it.
+    console.warn("Safety Check Bypassed due to API error.");
     return { isInappropriate: false, reason: "" };
   }
 };

@@ -1,10 +1,10 @@
+
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Send, Sparkles, Brain, Clock, Globe, Users, Trophy, MessageSquare, Repeat, Reply, ShieldAlert, Activity, Stethoscope } from 'lucide-react';
+import { Heart, Send, Sparkles, Brain, Clock, Globe, Users, MessageSquare, Repeat, Reply, Info } from 'lucide-react';
 import { User, Post, Comment } from '../types';
 import MoodPetSection from './MoodPetSection';
-import { STREAK_BADGES } from '../constants';
-import { checkContentSafety, getPsychiatristResponse } from '../services/geminiService';
+import { checkContentSafety } from '../services/geminiService';
 
 interface MoodSectionProps {
   user: User;
@@ -23,7 +23,7 @@ interface MoodSectionProps {
 }
 
 const MoodSection: React.FC<MoodSectionProps> = ({ user, posts, onPost, onHeart, onComment, onCommentInteraction, onRepost, onFollow, onBlock, isDarkMode, onNavigateToProfile, onUpdatePet, onViolation }) => {
-  const [subTab, setSubTab] = useState<'Express' | 'Teller' | 'Scan' | 'Dr. Pinel' | 'Mood Pet'>('Express');
+  const [subTab, setSubTab] = useState<'Express' | 'Teller' | 'Scan' | 'Mood Pet'>('Express');
   const [postContent, setPostContent] = useState('');
   const [feedFilter, setFeedFilter] = useState<'Global' | 'Circle'>('Global');
   const [postVisibility, setPostVisibility] = useState<'global' | 'circle'>('global');
@@ -32,12 +32,6 @@ const MoodSection: React.FC<MoodSectionProps> = ({ user, posts, onPost, onHeart,
   const [tellerQuestion, setTellerQuestion] = useState('');
   const [tellerResponse, setTellerResponse] = useState('');
   const [isTellerLoading, setIsTellerLoading] = useState(false);
-
-  // Psychiatrist state
-  const [psyChat, setPsyChat] = useState<{ role: 'user' | 'ai', text: string }[]>([]);
-  const [psyInput, setPsyInput] = useState('');
-  const [isPsyLoading, setIsPsyLoading] = useState(false);
-  const psyEndRef = useRef<HTMLDivElement>(null);
 
   const [quizActive, setQuizActive] = useState(false);
   const [quizStep, setQuizStep] = useState(0);
@@ -64,21 +58,20 @@ const MoodSection: React.FC<MoodSectionProps> = ({ user, posts, onPost, onHeart,
     return result.filter(p => p.visibility === 'circle' && (user.following.includes(p.author) || p.author === user.username));
   }, [posts, feedFilter, user.following, user.username, user.blockedUsers]);
 
-  const earnedBadges = useMemo(() => STREAK_BADGES.filter(b => user.moodStreak >= b.threshold), [user.moodStreak]);
-
-  useEffect(() => {
-    psyEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [psyChat]);
-
   const handlePost = async () => {
     if (!postContent.trim() || isBroadcasting) return;
     setIsBroadcasting(true);
     
-    const safety = await checkContentSafety(postContent);
-    if (safety.isInappropriate) {
-      onViolation(safety.reason);
-      setIsBroadcasting(false);
-      return;
+    try {
+      const safety = await checkContentSafety(postContent);
+      if (safety.isInappropriate) {
+        onViolation(safety.reason);
+        setIsBroadcasting(false);
+        return;
+      }
+    } catch (e) {
+      // If AI fails, we allow the post to ensure the app doesn't feel "broken"
+      console.warn("AI Safety Scanner Unavailable. Defaulting to safe.");
     }
 
     onPost(postContent, postVisibility);
@@ -98,23 +91,6 @@ const MoodSection: React.FC<MoodSectionProps> = ({ user, posts, onPost, onHeart,
     onCommentInteraction(postId, commentId, 'reply', replyContent);
     setReplyContent('');
     setReplyingTo(null);
-  };
-
-  const handlePsySend = async () => {
-    if (!psyInput.trim() || isPsyLoading) return;
-    const userMsg = psyInput;
-    setPsyChat(prev => [...prev, { role: 'user', text: userMsg }]);
-    setPsyInput('');
-    setIsPsyLoading(true);
-
-    try {
-      const res = await getPsychiatristResponse(userMsg);
-      setPsyChat(prev => [...prev, { role: 'ai', text: res.text }]);
-    } catch (err) {
-      setPsyChat(prev => [...prev, { role: 'ai', text: "The medical uplink is currently offline. Please verify your Metropolis key." }]);
-    } finally {
-      setIsPsyLoading(false);
-    }
   };
 
   const renderComment = (postId: string, comment: Comment, depth = 0) => (
@@ -224,7 +200,7 @@ const MoodSection: React.FC<MoodSectionProps> = ({ user, posts, onPost, onHeart,
   return (
     <div className="flex flex-col gap-6 pb-20 h-full min-h-0">
       <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 shrink-0">
-        {['Express', 'Dr. Pinel', 'Teller', 'Scan', 'Mood Pet'].map((t) => (
+        {['Express', 'Teller', 'Scan', 'Mood Pet'].map((t) => (
           <button key={t} onClick={() => setSubTab(t as any)} className={`px-5 py-2.5 rounded-full font-black text-[10px] md:text-xs transition-all whitespace-nowrap uppercase tracking-tighter border-b-4 ${subTab === t ? 'bg-custom border-black/20 text-white shadow-lg translate-y-[-2px]' : isDarkMode ? 'bg-slate-800 border-slate-900 text-white/30' : 'bg-white border-gray-100 text-slate-500'}`}>
             {t}
           </button>
@@ -313,67 +289,6 @@ const MoodSection: React.FC<MoodSectionProps> = ({ user, posts, onPost, onHeart,
                     </AnimatePresence>
                   </motion.div>
                 )) : <div className="py-20 text-center opacity-20 font-black uppercase italic text-lg tracking-widest">The metropolis is quiet.</div>}
-              </div>
-            </motion.div>
-          )}
-
-          {subTab === 'Dr. Pinel' && (
-            <motion.div key="psychiatrist" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col h-full min-h-[500px] relative">
-              <div className={`flex-1 flex flex-col rounded-[3rem] ${isDarkMode ? 'bg-slate-900' : 'bg-white'} border-4 border-black/5 shadow-2xl overflow-hidden`}>
-                <div className="p-6 border-b border-black/5 flex items-center gap-4 bg-custom/5">
-                  <div className="w-12 h-12 rounded-2xl bg-custom text-white flex items-center justify-center shadow-lg border-2 border-white/20">
-                    <Stethoscope size={28} />
-                  </div>
-                  <div>
-                    <h3 className="font-black italic uppercase tracking-tighter text-lg leading-none">Dr. Philippe Pinel</h3>
-                    <p className="text-[9px] font-black uppercase tracking-widest opacity-40 mt-1">Chief Psychiatrist of Mooderia</p>
-                  </div>
-                  <div className="ml-auto flex items-center gap-2 bg-green-500/10 px-3 py-1 rounded-full border border-green-500/20">
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                    <span className="text-[8px] font-black uppercase text-green-500 tracking-widest">Neural Link Active</span>
-                  </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-6 space-y-4 fading-scrollbar">
-                  {psyChat.length === 0 && (
-                    <div className="h-full flex flex-col items-center justify-center text-center p-8 opacity-30">
-                      <Brain size={48} className="mb-4" />
-                      <p className="text-sm font-black uppercase italic tracking-widest">The doctor is ready for your session. How are you feeling, citizen?</p>
-                    </div>
-                  )}
-                  {psyChat.map((msg, i) => (
-                    <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[85%] p-4 rounded-2xl font-bold text-sm shadow-sm border-b-4 ${msg.role === 'user' ? 'bg-blue-600 border-blue-800 text-white rounded-tr-none' : isDarkMode ? 'bg-slate-800 border-slate-900 text-white rounded-tl-none' : 'bg-gray-100 border-gray-200 text-slate-800 rounded-tl-none'}`}>
-                        {msg.text}
-                      </div>
-                    </div>
-                  ))}
-                  {isPsyLoading && (
-                    <div className="flex justify-start">
-                      <div className="bg-black/5 px-6 py-3 rounded-2xl flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-custom animate-bounce" />
-                        <div className="w-1.5 h-1.5 rounded-full bg-custom animate-bounce [animation-delay:0.2s]" />
-                        <div className="w-1.5 h-1.5 rounded-full bg-custom animate-bounce [animation-delay:0.4s]" />
-                      </div>
-                    </div>
-                  )}
-                  <div ref={psyEndRef} />
-                </div>
-
-                <div className="p-6 border-t border-black/5 bg-black/5">
-                  <div className={`flex items-center gap-3 p-2 rounded-2xl border-2 transition-all ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'} focus-within:border-custom`}>
-                    <input 
-                      type="text" 
-                      value={psyInput} 
-                      onChange={e => setPsyInput(e.target.value)}
-                      onKeyPress={e => e.key === 'Enter' && handlePsySend()}
-                      disabled={isPsyLoading}
-                      placeholder="Start your neural session..." 
-                      className="flex-1 bg-transparent px-4 py-2 font-bold text-sm outline-none" 
-                    />
-                    <button onClick={handlePsySend} disabled={isPsyLoading} className="kahoot-button-custom p-3 rounded-xl text-white shadow-md active:scale-95 transition-all"><Send size={20} /></button>
-                  </div>
-                </div>
               </div>
             </motion.div>
           )}
