@@ -1,7 +1,6 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Star, Zap, BookOpen, Scroll, Sparkles, Lock, Unlock } from 'lucide-react';
+import { Heart, Star, Zap, BookOpen, Scroll, Sparkles, Lock, Unlock, RefreshCw, Trash2, Info } from 'lucide-react';
 import { ZODIACS, getZodiacFromDate } from '../constants';
 import { getHoroscope, getLovePrediction } from '../services/geminiService';
 
@@ -16,6 +15,24 @@ const MONTHS = [
   "July", "August", "September", "October", "November", "December"
 ];
 
+const LUCKY_PHRASES = [
+  "Vibrant opportunities await in the social districts today.",
+  "Deep focus on self-care will yield unexpected rewards.",
+  "Creative resonance is peaking in your sector this afternoon.",
+  "A sudden alignment may bring back a lost neural connection.",
+  "Your financial frequency is stabilizing. Steady moves ahead.",
+  "The metropolis lights are guiding you toward a major breakthrough.",
+  "Energy levels are high; now is the time to launch your ideas.",
+  "Quiet observation will reveal more than active pursuit today.",
+  "A high-vibe encounter is waiting for you in the Citizen Hub.",
+  "Small gestures of kindness will multiply your luck ten-fold.",
+  "Your intuition is sharp. Trust the first signal you receive.",
+  "The stars suggest a period of rest before a massive leap forward.",
+  "Digital winds are blowing in your favor. Navigate with confidence.",
+  "Synchronicity is everywhere. Pay attention to repeating numbers.",
+  "A breakthrough in communication will clear up an old misunderstanding."
+];
+
 const ZodiacSection: React.FC<ZodiacSectionProps> = ({ isDarkMode }) => {
   const [tab, setTab] = useState<ZodiacTab>('LoveMatcher');
   const [m1, setM1] = useState(1);
@@ -27,19 +44,30 @@ const ZodiacSection: React.FC<ZodiacSectionProps> = ({ isDarkMode }) => {
   const [dailyHoroscopes, setDailyHoroscopes] = useState<Record<string, string>>({});
   const [activeSign, setActiveSign] = useState<string | null>(null);
   const [luckyZodiac, setLuckyZodiac] = useState(ZODIACS[0].name);
+  const [luckySeed, setLuckySeed] = useState(0);
 
   // Daily Lock Persistence for each Sign
   useEffect(() => {
     const saved = localStorage.getItem('mooderia_multi_horoscopes');
     if (saved) {
-      const { date, data } = JSON.parse(saved);
-      if (date === new Date().toDateString()) {
-        setDailyHoroscopes(data);
-      } else {
+      try {
+        const { date, data } = JSON.parse(saved);
+        if (date === new Date().toDateString()) {
+          setDailyHoroscopes(data);
+        } else {
+          localStorage.removeItem('mooderia_multi_horoscopes');
+        }
+      } catch (e) {
         localStorage.removeItem('mooderia_multi_horoscopes');
       }
     }
   }, []);
+
+  const resetHoroscopes = () => {
+    localStorage.removeItem('mooderia_multi_horoscopes');
+    setDailyHoroscopes({});
+    setActiveSign(null);
+  };
 
   const handleMatch = async () => {
     setIsLoading(true);
@@ -55,14 +83,14 @@ const ZodiacSection: React.FC<ZodiacSectionProps> = ({ isDarkMode }) => {
     }
   };
 
-  const handleHoroscope = async (sign: string) => {
+  const handleHoroscope = async (sign: string, force = false) => {
     setActiveSign(sign);
-    if (dailyHoroscopes[sign]) return; // Already fetched for today
+    if (dailyHoroscopes[sign] && !force) return;
     
     setIsLoading(true);
     try {
       const res = await getHoroscope(sign);
-      const text = res || 'Consulting stars...';
+      const text = res || 'The stars are silent.';
       const newData = { ...dailyHoroscopes, [sign]: text };
       setDailyHoroscopes(newData);
       localStorage.setItem('mooderia_multi_horoscopes', JSON.stringify({
@@ -78,31 +106,36 @@ const ZodiacSection: React.FC<ZodiacSectionProps> = ({ isDarkMode }) => {
 
   const currentLucky = useMemo(() => {
     const today = new Date().toDateString();
-    const seed = luckyZodiac + today;
+    const seed = luckyZodiac + today + luckySeed;
     let hash = 0;
-    for (let i = 0; i < seed.length; i++) hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+    for (let i = 0; i < seed.length; i++) {
+      hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const absHash = Math.abs(hash);
     const colors = [
       { name: "Ruby Red", hex: "#e21b3c" },
       { name: "Emerald Green", hex: "#26890c" },
       { name: "Azure Blue", hex: "#1368ce" },
       { name: "Goldenrod", hex: "#ffa602" },
-      { name: "Metropolis Purple", hex: "#46178f" }
+      { name: "Metropolis Purple", hex: "#46178f" },
+      { name: "Neon Pink", hex: "#ec4899" }
     ];
+
     return { 
-      color: colors[Math.abs(hash) % colors.length], 
-      number: (Math.abs(hash) % 99) + 1, 
-      phrase: ["Vibrant opportunities await in social districts.", "Deep focus on self-care will yield rewards.", "Creative resonance is peaking in your sector.", "A sudden alignment may bring a lost connection."][Math.abs(hash) % 4]
+      color: colors[absHash % colors.length], 
+      number: (absHash % 99) + 1, 
+      phrase: LUCKY_PHRASES[absHash % LUCKY_PHRASES.length]
     };
-  }, [luckyZodiac]);
+  }, [luckyZodiac, luckySeed]);
 
   const DayPicker = ({ val, setVal }: { val: number, setVal: (v: number) => void }) => (
-    <select value={val} onChange={(e) => setVal(parseInt(e.target.value))} className={`flex-1 ${isDarkMode ? 'bg-[#1a1a1a]' : 'bg-gray-50'} p-3 md:p-4 rounded-2xl font-black border-4 border-black/5 text-[10px] md:text-xs outline-none focus:border-custom appearance-none text-center`}>
+    <select value={val} onChange={(e) => setVal(parseInt(e.target.value))} className={`flex-1 ${isDarkMode ? 'bg-slate-800' : 'bg-gray-50'} p-3 md:p-4 rounded-2xl font-black border-4 border-black/5 text-[10px] md:text-xs outline-none focus:border-custom appearance-none text-center`}>
       {Array.from({ length: 31 }, (_, i) => i + 1).map(d => <option key={d} value={d}>{d}</option>)}
     </select>
   );
 
   const MonthPicker = ({ val, setVal }: { val: number, setVal: (v: number) => void }) => (
-    <select value={val} onChange={(e) => setVal(parseInt(e.target.value))} className={`flex-1 ${isDarkMode ? 'bg-[#1a1a1a]' : 'bg-gray-50'} p-3 md:p-4 rounded-2xl font-black border-4 border-black/5 text-[10px] md:text-xs outline-none focus:border-custom appearance-none text-center`}>
+    <select value={val} onChange={(e) => setVal(parseInt(e.target.value))} className={`flex-1 ${isDarkMode ? 'bg-slate-800' : 'bg-gray-50'} p-3 md:p-4 rounded-2xl font-black border-4 border-black/5 text-[10px] md:text-xs outline-none focus:border-custom appearance-none text-center`}>
       {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
     </select>
   );
@@ -111,7 +144,7 @@ const ZodiacSection: React.FC<ZodiacSectionProps> = ({ isDarkMode }) => {
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex gap-2 pb-6 shrink-0 overflow-x-auto no-scrollbar">
         {['LoveMatcher', 'Horoscope', 'Almanac', 'LuckyDay'].map((t) => (
-          <button key={t} onClick={() => setTab(t as ZodiacTab)} className={`px-6 md:px-8 py-3 rounded-full font-black text-[10px] md:text-xs transition-all whitespace-nowrap uppercase tracking-tighter border-b-4 ${tab === t ? 'bg-custom border-black/20 text-white shadow-xl translate-y-[-2px]' : isDarkMode ? 'bg-[#1a1a1a] border-black text-white/30' : 'bg-white border-gray-100 text-slate-500 shadow-sm'}`}>
+          <button key={t} onClick={() => setTab(t as ZodiacTab)} className={`px-6 md:px-8 py-3 rounded-full font-black text-[10px] md:text-xs transition-all whitespace-nowrap uppercase tracking-tighter border-b-4 ${tab === t ? 'bg-custom border-black/20 text-white shadow-xl translate-y-[-2px]' : isDarkMode ? 'bg-slate-800 border-black text-white/30' : 'bg-white border-gray-100 text-slate-500 shadow-sm'}`}>
             {t.replace(/([A-Z])/g, ' $1').trim()}
           </button>
         ))}
@@ -120,7 +153,7 @@ const ZodiacSection: React.FC<ZodiacSectionProps> = ({ isDarkMode }) => {
       <div className="flex-1 fading-scrollbar overflow-y-auto pr-2">
         <AnimatePresence mode="wait">
           {tab === 'LoveMatcher' && (
-            <motion.div key="love" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`p-6 md:p-10 rounded-[3rem] md:rounded-[4rem] ${isDarkMode ? 'bg-[#111111]' : 'bg-white'} border-4 border-black/5 shadow-2xl text-center`}>
+            <motion.div key="love" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`p-6 md:p-10 rounded-[3rem] md:rounded-[4rem] ${isDarkMode ? 'bg-slate-900' : 'bg-white'} border-4 border-black/5 shadow-2xl text-center`}>
               <Heart className="mx-auto mb-6 md:mb-8 text-[#e21b3c] animate-pulse" size={60} />
               <h2 className="text-3xl md:text-5xl font-black mb-8 md:mb-12 uppercase italic tracking-tighter">Love Matcher</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-6 md:gap-10 mb-8 md:mb-12 max-w-3xl mx-auto">
@@ -139,33 +172,38 @@ const ZodiacSection: React.FC<ZodiacSectionProps> = ({ isDarkMode }) => {
           )}
 
           {tab === 'Horoscope' && (
-            <motion.div key="horoscope" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`p-6 md:p-10 rounded-[3rem] md:rounded-[4rem] ${isDarkMode ? 'bg-[#111111]' : 'bg-white'} border-4 border-black/5 shadow-2xl`}>
+            <motion.div key="horoscope" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`p-6 md:p-10 rounded-[3rem] md:rounded-[4rem] ${isDarkMode ? 'bg-slate-900' : 'bg-white'} border-4 border-black/5 shadow-2xl relative`}>
+              <div className="absolute top-8 right-8 flex gap-2">
+                <button onClick={resetHoroscopes} className="p-3 bg-black/10 hover:bg-black/20 rounded-xl text-custom transition-all" title="Clear All Cache"><Trash2 size={20}/></button>
+              </div>
+
               <Star className="mx-auto mb-8 text-[#ffa602]" size={60} />
               <h2 className="text-3xl md:text-5xl font-black text-center mb-6 uppercase italic tracking-tighter">Cosmic Forecast</h2>
               
               <div className="mb-10 text-center">
-                <p className="text-sm font-bold opacity-40 uppercase tracking-tight">Synchronize with any constellation. Each lock resets at midnight.</p>
+                <p className="text-sm font-bold opacity-40 uppercase tracking-tight">Tap any sign to unlock its neural daily prediction.</p>
               </div>
 
               <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 md:gap-3 mb-10 md:mb-12">
                 {ZODIACS.map(z => {
-                  const isLocked = !!dailyHoroscopes[z.name];
+                  const isFetched = !!dailyHoroscopes[z.name];
                   return (
                     <button 
                       key={z.name} 
                       disabled={isLoading}
                       onClick={() => handleHoroscope(z.name)} 
-                      className={`p-3 md:p-4 rounded-2xl md:rounded-3xl border-4 font-black transition-all flex flex-col items-center gap-1 md:gap-2 ${activeSign === z.name ? 'border-custom bg-custom/10 scale-105 shadow-xl opacity-100' : isLocked ? 'opacity-80 grayscale-0 border-custom/40 bg-custom/5' : isDarkMode ? 'bg-[#1a1a1a] border-white/5 opacity-50' : 'bg-gray-50 border-gray-100 opacity-60'}`}
+                      className={`p-3 md:p-4 rounded-2xl md:rounded-3xl border-4 font-black transition-all flex flex-col items-center gap-1 md:gap-2 ${activeSign === z.name ? 'border-custom bg-custom/10 scale-105 shadow-xl opacity-100' : isFetched ? 'opacity-80 border-custom/40 bg-custom/5' : isDarkMode ? 'bg-slate-800 border-white/5 opacity-50' : 'bg-gray-50 border-gray-100 opacity-60'}`}
                     >
                       <div className="relative">
                         <span className="text-2xl md:text-4xl">{z.symbol}</span>
-                        {isLocked && <div className="absolute -top-1 -right-1 text-custom"><Unlock size={10} /></div>}
+                        {isFetched && <div className="absolute -top-1 -right-1 text-custom"><Unlock size={10} /></div>}
                       </div>
                       <span className="text-[8px] md:text-[10px] uppercase truncate w-full text-center">{z.name}</span>
                     </button>
                   );
                 })}
               </div>
+              
               <AnimatePresence mode="wait">
                 {isLoading && (
                   <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-12 text-center flex flex-col items-center gap-4">
@@ -175,10 +213,17 @@ const ZodiacSection: React.FC<ZodiacSectionProps> = ({ isDarkMode }) => {
                 )}
                 {activeSign && dailyHoroscopes[activeSign] && !isLoading && (
                   <motion.div key="result" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="p-6 md:p-10 rounded-[2.5rem] md:rounded-[3rem] border-l-[16px] border-custom bg-custom/5 relative overflow-hidden">
-                    <div className="absolute top-4 right-6 opacity-20"><Unlock size={32} className="text-custom" /></div>
-                    <h4 className="text-lg md:text-2xl font-black text-custom uppercase italic mb-3 md:mb-4 tracking-widest">{activeSign} Alignment</h4>
+                    <div className="flex justify-between items-start mb-4">
+                      <h4 className="text-lg md:text-2xl font-black text-custom uppercase italic tracking-widest">{activeSign} Alignment</h4>
+                      <button onClick={() => handleHoroscope(activeSign!, true)} className="p-2 hover:bg-black/5 rounded-lg text-custom transition-all" title="Refresh This Signal">
+                        <RefreshCw size={18} />
+                      </button>
+                    </div>
                     <p className="text-sm md:text-xl font-bold leading-relaxed italic opacity-90">"{dailyHoroscopes[activeSign]}"</p>
-                    <p className="mt-8 text-[9px] font-black uppercase opacity-20 tracking-widest">This sign's frequency is captured for the day.</p>
+                    <div className="mt-8 flex items-center gap-2 opacity-20">
+                      <Unlock size={14} className="text-custom" />
+                      <p className="text-[9px] font-black uppercase tracking-widest">Neural Link Cached for Today</p>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -187,14 +232,14 @@ const ZodiacSection: React.FC<ZodiacSectionProps> = ({ isDarkMode }) => {
 
           {tab === 'Almanac' && (
             <motion.div key="almanac" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-               <div className={`p-8 md:p-10 rounded-[3rem] ${isDarkMode ? 'bg-[#111111]' : 'bg-white'} border-4 border-black/5 shadow-2xl text-center mb-8`}>
+               <div className={`p-8 md:p-10 rounded-[3rem] ${isDarkMode ? 'bg-slate-900' : 'bg-white'} border-4 border-black/5 shadow-2xl text-center mb-8`}>
                  <BookOpen size={60} className="mx-auto mb-4 md:mb-6 text-custom" />
                  <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter">City Almanac</h2>
                  <p className="text-[10px] md:text-xs font-black opacity-40 uppercase tracking-[0.4em] mt-2">Archives of the Ancient Metropolis</p>
                </div>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 pb-20">
                   {ZODIACS.map(z => (
-                    <div key={z.name} className={`p-8 md:p-10 rounded-[2.5rem] md:rounded-[3.5rem] ${isDarkMode ? 'bg-[#111111]' : 'bg-white'} border-4 border-black/5 shadow-2xl group hover:border-custom transition-all`}>
+                    <div key={z.name} className={`p-8 md:p-10 rounded-[2.5rem] md:rounded-[3.5rem] ${isDarkMode ? 'bg-slate-900' : 'bg-white'} border-4 border-black/5 shadow-2xl group hover:border-custom transition-all`}>
                       <div className="flex items-center justify-between mb-4 md:mb-6">
                          <div className="flex items-center gap-3 md:gap-5">
                             <span className="text-4xl md:text-6xl">{z.symbol}</span>
@@ -211,11 +256,15 @@ const ZodiacSection: React.FC<ZodiacSectionProps> = ({ isDarkMode }) => {
           )}
 
           {tab === 'LuckyDay' && (
-            <motion.div key="lucky" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`p-6 md:p-10 rounded-[3rem] md:rounded-[4rem] ${isDarkMode ? 'bg-[#111111]' : 'bg-white'} border-4 border-black/5 shadow-2xl text-center`}>
+            <motion.div key="lucky" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`p-6 md:p-10 rounded-[3rem] md:rounded-[4rem] ${isDarkMode ? 'bg-slate-900' : 'bg-white'} border-4 border-black/5 shadow-2xl text-center relative`}>
+              <div className="absolute top-8 right-8">
+                <button onClick={() => setLuckySeed(s => s + 1)} className="p-3 bg-black/5 hover:bg-black/10 rounded-xl text-custom transition-all" title="Re-Sync Luck"><RefreshCw size={20}/></button>
+              </div>
+
               <Zap className="mx-auto mb-8 md:mb-10 shrink-0" size={60} style={{ color: currentLucky.color.hex }} />
               <h2 className="text-3xl md:text-5xl font-black mb-10 md:mb-14 uppercase italic tracking-tighter">Lucky Sync</h2>
               <div className="flex justify-center mb-10 md:mb-14">
-                <select value={luckyZodiac} onChange={(e) => setLuckyZodiac(e.target.value)} className={`w-full max-w-sm p-4 md:p-6 rounded-2xl md:rounded-3xl font-black border-4 dark:bg-slate-800 text-lg md:text-2xl outline-none focus:border-custom appearance-none text-center shadow-inner`}>
+                <select value={luckyZodiac} onChange={(e) => setLuckyZodiac(e.target.value)} className={`w-full max-w-sm p-4 md:p-6 rounded-2xl md:rounded-3xl font-black border-4 ${isDarkMode ? 'bg-slate-800' : 'bg-gray-50'} text-lg md:text-2xl outline-none focus:border-custom appearance-none text-center shadow-inner`}>
                   {ZODIACS.map(z => <option key={z.name} value={z.name}>{z.symbol} {z.name.toUpperCase()}</option>)}
                 </select>
               </div>
@@ -231,12 +280,14 @@ const ZodiacSection: React.FC<ZodiacSectionProps> = ({ isDarkMode }) => {
                   <p className="text-4xl md:text-7xl font-black italic tracking-tighter" style={{ color: currentLucky.color.hex }}>{currentLucky.number}</p>
                 </div>
                 
-                <div className="p-8 md:p-10 rounded-[2rem] shadow-xl flex items-center justify-center border-4 border-black/5 bg-black/5 min-h-[120px]">
-                  <p className="text-sm md:text-xl font-black italic leading-tight">
+                <div className="p-8 md:p-10 rounded-[2rem] shadow-xl flex flex-col items-center justify-center border-4 border-black/5 bg-black/5 min-h-[120px] relative">
+                  <div className="absolute top-2 left-1/2 -translate-x-1/2 opacity-10"><Info size={14}/></div>
+                  <p className="text-sm md:text-xl font-black italic leading-tight px-4">
                     "{currentLucky.phrase}"
                   </p>
                 </div>
               </div>
+              <p className="mt-12 text-[9px] font-black uppercase opacity-20 tracking-widest">Frequencies refresh daily at Metropolis Midnight</p>
             </motion.div>
           )}
         </AnimatePresence>

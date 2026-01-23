@@ -1,50 +1,47 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 
 /**
- * Robust AI initialization.
- * We create the instance inside the call to ensure it always picks up the latest environment state.
+ * Enhanced Gemini utility that follows strict SDK guidelines.
  */
 const callGemini = async (model: string, prompt: string, config?: any) => {
   try {
     const apiKey = process.env.API_KEY;
     if (!apiKey) {
-      console.warn("METROPOLIS DIAGNOSTIC: process.env.API_KEY is currently undefined.");
-      throw new Error("API Key Missing");
+      throw new Error("API_KEY_MISSING");
     }
 
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: model,
-      contents: prompt, // Using simplified string content for maximum reliability
+      contents: prompt,
       config: config
     });
 
     return response.text;
   } catch (error: any) {
-    console.error("METROPOLIS LINK ERROR:", error.message || error);
-    if (error.message?.includes("API_KEY_INVALID")) {
-      console.error("CRITICAL: The API Key provided in Vercel is invalid.");
-    }
+    console.error("METROPOLIS API ERROR:", error.message || error);
     throw error;
   }
 };
 
 export const getHoroscope = async (sign: string) => {
   try {
-    const prompt = `Provide a daily horoscope for ${sign} today. Keep it to 3 encouraging sentences.`;
-    const systemInstruction = "You are a mystical Metropolis Astrologer. Provide insightful, modern horoscopes.";
+    const prompt = `Provide a daily horoscope for ${sign} for today. Keep it to exactly three sentences. Use a modern, encouraging, and slightly mystical tone.`;
+    const systemInstruction = "You are the Mooderia Chief Astrologer. Your predictions are insightful and concise.";
     
     const text = await callGemini('gemini-3-flash-preview', prompt, { systemInstruction });
-    return text || "The constellations are currently obscured.";
-  } catch (error) {
-    return "The stars are recalibrating. Check back shortly.";
+    return text || "The cosmic signal is weak. Try refreshing your link.";
+  } catch (error: any) {
+    if (error.message === "API_KEY_MISSING") {
+      return "METROPOLIS ERROR: Your API Key is not detected. Check your Environment Variables and Redeploy.";
+    }
+    return "The stars are currently undergoing maintenance. Please try again in a moment.";
   }
 };
 
 export const getLovePrediction = async (sign1: string, sign2: string) => {
   try {
-    const prompt = `Predict love compatibility between ${sign1} and ${sign2}. Return only a JSON object with 'percentage' (number 0-100) and 'reason' (string).`;
+    const prompt = `Predict love compatibility between ${sign1} and ${sign2}. Return only a JSON object with 'percentage' (number 0-100) and 'reason' (string, max 30 words).`;
     
     const text = await callGemini('gemini-3-flash-preview', prompt, {
       responseMimeType: "application/json",
@@ -58,19 +55,16 @@ export const getLovePrediction = async (sign1: string, sign2: string) => {
       }
     });
     
-    return JSON.parse(text || "{}");
+    return JSON.parse(text || '{"percentage": 50, "reason": "Connection unstable."}');
   } catch (error) {
-    console.error("Love Prediction Error:", error);
-    return { percentage: 50, reason: "The romantic frequencies are experiencing atmospheric interference." };
+    return { percentage: 50, reason: "The romantic frequencies are currently experiencing atmospheric interference." };
   }
 };
 
 export const checkContentSafety = async (text: string) => {
   try {
-    // If the text is very short, assume safe to save on API quota
     if (text.length < 3) return { isInappropriate: false, reason: "" };
-
-    const prompt = `Analyze this text for hate speech or severe harassment: "${text}". Return JSON with 'isInappropriate' (boolean) and 'reason' (string).`;
+    const prompt = `Check this text for safety: "${text}". Return JSON with 'isInappropriate' (boolean) and 'reason' (string).`;
     
     const resultText = await callGemini('gemini-3-flash-preview', prompt, {
       responseMimeType: "application/json",
@@ -84,10 +78,8 @@ export const checkContentSafety = async (text: string) => {
       }
     });
 
-    return JSON.parse(resultText || "{\"isInappropriate\": false, \"reason\": \"\"}");
+    return JSON.parse(resultText || '{"isInappropriate": false, "reason": ""}');
   } catch (error) {
-    // Fail safe: If the safety check API fails (e.g. key issue), allow the post but log it.
-    console.warn("Safety Check Bypassed due to API error.");
     return { isInappropriate: false, reason: "" };
   }
 };
