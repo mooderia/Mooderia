@@ -4,24 +4,6 @@ import { GoogleGenAI, Type } from "@google/genai";
 // Standard initialization as per instructions
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-export const getPsychiatristResponse = async (message: string) => {
-  try {
-    // Correct content generation with direct string prompt
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: message,
-      config: {
-        systemInstruction: "You are Dr. Philippe Pinel, the Chief Psychiatrist of Mooderia. You provide compassionate, expert, and concise mental health support to citizens. Your tone is professional, warm, and therapeutic. Focus on validation, mindfulness, and gentle guidance. Keep responses under 3 paragraphs.",
-      }
-    });
-    // response.text is a property, not a method
-    return { text: response.text || "The neural link is experiencing static. Dr. Pinel is momentarily unavailable." };
-  } catch (error) {
-    console.error("Psychiatrist API Error:", error);
-    return { text: "Connection to the Medical District failed. Please ensure your Metropolis credentials (API Key) are valid and that you have redeployed after adding them." };
-  }
-};
-
 export const getHoroscope = async (sign: string) => {
   try {
     const response = await ai.models.generateContent({
@@ -86,5 +68,22 @@ export const checkContentSafety = async (text: string) => {
   } catch (error) {
     console.error("Safety Check Error:", error);
     return { isInappropriate: false, reason: "" };
+  }
+};
+
+// Fix: Implement getPsychiatristResponse to handle chat sessions with Dr. Pinel
+export const getPsychiatristResponse = async (text: string) => {
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: text,
+      config: {
+        systemInstruction: "You are Dr. Philippe Pinel, a wise and empathetic psychiatrist in the Mooderia Metropolis. Your goal is to provide supportive, non-judgmental, and insightful guidance to citizens. Use a professional yet caring tone. If a user expresses severe distress, gently remind them to seek professional real-world help while remaining supportive.",
+      }
+    });
+    return { text: response.text || "I am processing your words. Tell me more about how you feel." };
+  } catch (error) {
+    console.error("Psychiatrist API Error:", error);
+    return { text: "The neural bridge is momentarily unstable. I am here for you when the connection clears." };
   }
 };

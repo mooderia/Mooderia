@@ -10,13 +10,14 @@
     "cap:android": "cap add android && cap copy"
   },
   "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
+    "@types/react": "^19.2.10",
     "electron": "^31.0.0",
-    "electron-builder": "^24.13.3",
-    "@capacitor/cli": "^6.0.0"
+    "electron-builder": "^24.13.3"
   },
   "dependencies": {
-    "@capacitor/core": "^6.0.0",
-    "@capacitor/android": "^6.0.0"
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/core": "^6.0.0"
   },
   "build": {
     "appId": "com.mooderia.app",

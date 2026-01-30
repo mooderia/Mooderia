@@ -1,4 +1,3 @@
-
 export type Mood = 'Wonderful' | 'Excited' | 'Happy' | 'Normal' | 'Tired' | 'Angry' | 'Flaming' | null;
 
 export interface Badge {
@@ -119,7 +118,7 @@ export interface Comment {
   replies: Comment[];
 }
 
-export type Section = 'Home' | 'Mood' | 'Zodiac' | 'CityHall' | 'Profile' | 'Settings' | 'Notifications' | 'Psychiatrist';
+export type Section = 'Home' | 'Mood' | 'Zodiac' | 'CityHall' | 'Profile' | 'Settings' | 'Notifications';
 
 export interface ZodiacInfo {
   name: string;

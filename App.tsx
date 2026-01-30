@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Mood, Section, Post, Comment, Message, Notification, Group, DiaryEntry } from './types';
@@ -10,7 +9,6 @@ import CityHallSection from './sections/CityHallSection';
 import ProfileSection from './sections/ProfileSection';
 import SettingsSection from './sections/SettingsSection';
 import NotificationsSection from './sections/NotificationsSection';
-import PsychiatristSection from './sections/PsychiatristSection';
 import AuthScreen from './sections/AuthScreen';
 import LoadingScreen from './components/LoadingScreen';
 import MoodCheckIn from './components/MoodCheckIn';
@@ -298,7 +296,7 @@ const App: React.FC = () => {
   if (isAppStarting) return <LoadingScreen />;
   if (!currentUser) return <AuthScreen onLogin={(u) => { setCurrentUser(u); setViewingUsername(u.username); }} isOffline={isOffline} />;
 
-  const isFixedSection = activeSection === 'CityHall' || activeSection === 'Mood' || activeSection === 'Psychiatrist';
+  const isFixedSection = activeSection === 'CityHall' || activeSection === 'Mood';
   const isLockedForGuest = isGuest && (activeSection === 'CityHall' || activeSection === 'Notifications' || activeSection === 'Profile');
   const isLockedForOffline = isOffline && (activeSection === 'CityHall');
 
@@ -389,14 +387,6 @@ const App: React.FC = () => {
                     onNavigateToProfile={(u) => {setViewingUsername(u); setActiveSection('Profile');}} 
                     onReactToMessage={() => {}} 
                     onViolation={() => {}}
-                  />
-                )}
-                {activeSection === 'Psychiatrist' && (
-                  <PsychiatristSection 
-                    currentUser={currentUser!} 
-                    isDarkMode={isDarkMode} 
-                    messages={allMessages} 
-                    onSendMessage={(text) => handleSendMessage('DrPinel', text)} 
                   />
                 )}
                 {activeSection === 'Mood' && (

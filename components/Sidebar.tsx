@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Home, Smile, Moon, Building2, User, Settings, Bell, LucideProps, Clock as ClockIcon, ChevronRight, Sparkles, Lock, WifiOff, Stethoscope } from 'lucide-react';
+import { Home, Smile, Moon, Building2, User, Settings, Bell, LucideProps, Clock as ClockIcon, ChevronRight, Sparkles, Lock, WifiOff } from 'lucide-react';
 import { Section, User as UserType } from '../types';
 
 interface SidebarProps {
@@ -27,7 +26,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeSection, onNavigate, isDarkMode
     { id: 'Home', icon: <Home />, color: 'bg-[#46178f]', label: 'Dashboard', mobileLabel: 'Home' },
     { id: 'Zodiac', icon: <Sparkles />, color: 'bg-[#1368ce]', label: 'Cosmic Hub', mobileLabel: 'Zodiac' },
     { id: 'Mood', icon: <Smile />, color: 'bg-[#26890c]', label: 'Mood Labs', mobileLabel: 'Labs' },
-    { id: 'Psychiatrist', icon: <Stethoscope />, color: 'bg-[#0ea5e9]', label: 'Therapy', mobileLabel: 'Chat' },
     { id: 'CityHall', icon: <Building2 />, color: 'bg-[#e21b3c]', label: 'Citizen Hub', mobileLabel: 'City', restricted: true, offlineRestricted: true },
     { id: 'Notifications', icon: <Bell />, color: 'bg-[#ffa602]', label: 'Alerts', mobileLabel: 'Alerts', restricted: true },
   ];
