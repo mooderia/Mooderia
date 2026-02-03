@@ -1,12 +1,5 @@
-export type Mood = 'Wonderful' | 'Excited' | 'Happy' | 'Normal' | 'Tired' | 'Angry' | 'Flaming' | null;
 
-export interface Badge {
-  id: string;
-  name: string;
-  icon: string;
-  description: string;
-  threshold: number;
-}
+export type Mood = 'Wonderful' | 'Excited' | 'Happy' | 'Normal' | 'Tired' | 'Angry' | 'Flaming' | null;
 
 export interface DiaryEntry {
   id: string;
@@ -16,114 +9,84 @@ export interface DiaryEntry {
   timestamp: number;
 }
 
+export interface ScheduleItem {
+  id: string;
+  title: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:mm
+  period: 'AM' | 'PM';
+  timestamp: number;
+  alerted: boolean;
+}
+
+export interface RoutineItem {
+  id: string;
+  title: string;
+  icon: string;
+  days: number[]; // 0-6 (Sun-Sat)
+  startTime: string; // HH:mm
+  startPeriod: 'AM' | 'PM';
+  endTime: string; // HH:mm
+  endPeriod: 'AM' | 'PM';
+  durationMinutes: number;
+  completedDates: string[]; // YYYY-MM-DD
+}
+
 export interface User {
+  id?: string;
+  citizenCode: string; // 6-digit unique code
   displayName: string;
   username: string;
   email: string;
-  password?: string;
-  bio?: string;
-  followers: string[];
-  following: string[];
-  friends: string[];
-  blockedUsers: string[];
-  posts: Post[];
-  reposts: Post[];
-  moodHistory: { date: string, mood: Mood, score: number }[];
-  diaryEntries?: DiaryEntry[];
-  moodStreak: number;
-  lastMoodDate?: string;
+  country: string; // Added Country
   profilePic?: string;
-  bannerPic?: string;
   profileColor?: string;
   title?: string;
-  likesReceived: number;
-  // Mood Pet Stats
-  petName: string;
+  bio?: string;
+  moodHistory: { date: string, mood: Mood, score: number }[];
+  diaryEntries: DiaryEntry[];
+  schedule: ScheduleItem[];
+  routines: RoutineItem[]; 
+  moodStreak: number;
+  lastMoodDate?: string;
   moodCoins: number;
+  
+  // Mood Pet Reworked
+  petName: string;
   petEmoji: string;
-  petHunger: number; // 0-100
-  petThirst: number; // 0-100
-  petRest: number;   // 0-100
   petLevel: number;
   petExp: number;
   petHasBeenChosen: boolean;
-  petLastUpdate: number; // timestamp
-  petSleepUntil: number | null; // timestamp
-  gameCooldowns: Record<string, number>; // gameId -> timestamp of when it can be played again
-  // Security / Moderation
-  warnings: number;
-  isBanned: boolean;
-}
-
-export interface MessageReaction {
-  emoji: string;
-  users: string[]; 
-}
-
-export interface Group {
-  id: string;
-  name: string;
-  photo?: string; 
-  members: string[]; 
-  nicknames: Record<string, string>; 
-  owner: string;
-  createdAt: number;
+  petBackground: string; 
+  unlockedBackgrounds: string[]; 
+  
+  // Social
+  friends: string[]; // List of usernames or IDs
+  friendRequests: string[]; // List of incoming usernames/IDs
+  following: string[];
+  followers: string[];
+  likesReceived: number;
 }
 
 export interface Message {
   id: string;
   sender: string;
-  recipient: string; 
+  recipient: string;
   text: string;
   timestamp: number;
   read: boolean;
-  reactions?: MessageReaction[];
-  isGroup?: boolean;
-  isSystem?: boolean; 
-  groupName?: string;
-  replyToId?: string;
-  replyToText?: string;
-  replyToSender?: string;
 }
 
 export interface Notification {
   id: string;
-  type: 'heart' | 'comment' | 'repost' | 'tier' | 'achievement' | 'follow' | 'comment_heart' | 'reply' | 'reaction' | 'warning';
-  fromUser: string;
-  recipient: string; 
-  postId?: string;
+  type: 'mail' | 'schedule' | 'routine' | 'system' | 'heart' | 'comment_heart' | 'comment' | 'reply' | 'repost' | 'achievement' | 'follow' | 'friend_request' | 'friend_accepted';
+  title: string;
+  text: string;
   timestamp: number;
   read: boolean;
-  postContentSnippet: string;
+  fromUser?: string;
+  postContentSnippet?: string;
+  actionId?: string; // For handling accepts
 }
 
-export interface Post {
-  id: string;
-  author: string;
-  content: string;
-  likes: string[]; 
-  comments: Comment[];
-  timestamp: number;
-  isRepost?: boolean;
-  originalAuthor?: string;
-  visibility: 'global' | 'circle';
-}
-
-export interface Comment {
-  id: string;
-  author: string;
-  text: string;
-  hearts: number;
-  timestamp: number;
-  replies: Comment[];
-}
-
-export type Section = 'Home' | 'Mood' | 'Zodiac' | 'CityHall' | 'Profile' | 'Settings' | 'Notifications';
-
-export interface ZodiacInfo {
-  name: string;
-  dates: string;
-  description: string;
-  history: string;
-  symbol: string;
-}
+export type Section = 'Home' | 'Mood' | 'CityHall' | 'Mails' | 'Profile' | 'Settings';

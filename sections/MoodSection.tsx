@@ -1,80 +1,49 @@
-
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Send, Sparkles, Brain, Clock, Globe, Users, Trophy, MessageSquare, Repeat, Reply, ShieldAlert, Activity, Stethoscope, Trash2, Edit, X, Lock, WifiOff, Book, Plus, Calendar, Bookmark } from 'lucide-react';
-import { User, Post, Comment, DiaryEntry, Mood } from '../types';
+import { User, Mood, DiaryEntry } from '../types';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { TrendingUp, Book, Brain, Sparkles, Plus, X, Trash2, HeartPulse, Zap } from 'lucide-react';
 import MoodPetSection from './MoodPetSection';
-import { STREAK_BADGES } from '../constants';
+import { t } from '../constants';
 
 interface MoodSectionProps {
   user: User;
-  posts: Post[];
-  onPost: (content: string, visibility: 'global' | 'circle') => void;
-  onHeart: (postId: string) => void;
-  onDeletePost: (postId: string) => void;
-  onEditPost: (postId: string, newContent: string) => void;
-  onComment: (postId: string, text: string) => void;
-  onCommentInteraction: (postId: string, commentId: string, action: 'heart' | 'reply', replyText?: string) => void;
-  onRepost: (post: Post) => void;
-  onFollow: (username: string) => void;
-  onFollowUsername?: (username: string) => void; // Fixed mismatch
-  onBlock: (username: string) => void;
+  onUpdate: (updates: Partial<User>) => void;
   isDarkMode: boolean;
-  onNavigateToProfile: (username: string) => void;
-  onUpdatePet: (hunger: number, thirst: number, rest: number, coins: number, exp?: number, sleepUntil?: number | null, newEmoji?: string, markChosen?: boolean, newName?: string, gameCooldownId?: string) => void;
-  onViolation: (reason: string) => void;
-  onAddDiaryEntry: (entry: DiaryEntry) => void;
-  isGuest?: boolean;
-  isOffline?: boolean;
+  language: 'English' | 'Filipino';
+  onReward: () => void;
+  triggerAnimation: (type: 'express' | 'schedule' | 'routine' | 'diary' | 'alarm', text?: string) => void;
 }
 
-const MoodSection: React.FC<MoodSectionProps> = ({ user, posts, onPost, onHeart, onDeletePost, onEditPost, onComment, onCommentInteraction, onRepost, onFollow, onBlock, isDarkMode, onNavigateToProfile, onUpdatePet, onViolation, onAddDiaryEntry, isGuest = false, isOffline = false }) => {
-  const [subTab, setSubTab] = useState<'Express' | 'Diary' | 'Teller' | 'Scan' | 'Mood Pet'>('Express');
-  const [postContent, setPostContent] = useState('');
-  const [feedFilter, setFeedFilter] = useState<'Global' | 'Circle'>('Global');
-  const [postVisibility, setPostVisibility] = useState<'global' | 'circle'>('global');
-  const [isBroadcasting, setIsBroadcasting] = useState(false);
-  
-  // Diary State
+const MoodSection: React.FC<MoodSectionProps> = ({ user, onUpdate, isDarkMode, language, onReward, triggerAnimation }) => {
+  const [subTab, setSubTab] = useState<'Statistics' | 'Diary' | 'Mood Pet' | 'Scan' | 'Teller'>('Statistics');
+
+  // Diary States
   const [isAddingDiary, setIsAddingDiary] = useState(false);
   const [diaryTitle, setDiaryTitle] = useState('');
   const [diaryContent, setDiaryContent] = useState('');
   const [diaryMood, setDiaryMood] = useState<Mood>('Normal');
 
-  const [tellerQuestion, setTellerQuestion] = useState('');
-  const [tellerResponse, setTellerResponse] = useState('');
-  const [isTellerLoading, setIsTellerLoading] = useState(false);
+  // Scan States
+  const [scanStep, setScanStep] = useState(0);
+  const [scanScores, setScanScores] = useState<Record<string, number>>({});
+  const [scanResult, setScanResult] = useState<Mood | null>(null);
 
-  const [quizActive, setQuizActive] = useState(false);
-  const [quizStep, setQuizStep] = useState(0);
-  const [quizScores, setQuizScores] = useState<Record<string, number>>({ Happy: 0, Angry: 0, Tired: 0, Normal: 0, Excited: 0 });
-  const [quizResult, setQuizResult] = useState<string | null>(null);
+  // Teller States
+  const [fortuneQuestion, setFortuneQuestion] = useState('');
+  const [fortuneAnswer, setFortuneAnswer] = useState('');
+  const [isConsulting, setIsConsulting] = useState(false);
 
-  const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
-  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
-  const [replyingTo, setReplyingTo] = useState<{ postId: string, commentId: string } | null>(null);
-  const [replyContent, setReplyContent] = useState('');
+  // Statistics Data
+  const lineData = useMemo(() => {
+    return user.moodHistory.slice(-14).map((entry, i) => ({ name: `Day ${i + 1}`, score: entry.score }));
+  }, [user.moodHistory]);
 
-  const [editingPostId, setEditingPostId] = useState<string | null>(null);
-  const [editBuffer, setEditBuffer] = useState('');
-
-  const [likersModalPost, setLikersModalPost] = useState<Post | null>(null);
-
-  const filteredPosts = useMemo(() => {
-    let result = posts.filter(p => !user.blockedUsers.includes(p.author));
-    if (feedFilter === 'Global') return result.filter(p => p.visibility === 'global');
-    return result.filter(p => p.visibility === 'circle' && (user.following.includes(p.author) || p.author === user.username));
-  }, [posts, feedFilter, user.following, user.username, user.blockedUsers]);
-
-  const handlePost = async () => {
-    if (isGuest || isOffline || !postContent.trim() || isBroadcasting) return;
-    setIsBroadcasting(true);
-    onPost(postContent, postVisibility);
-    setPostContent('');
-    // Give immediate feedback
-    setTimeout(() => setIsBroadcasting(true), 800);
-    setTimeout(() => setIsBroadcasting(false), 1600);
-  };
+  const barData = useMemo(() => {
+    const counts: Record<string, number> = { Wonderful: 0, Excited: 0, Happy: 0, Normal: 0, Tired: 0, Angry: 0, Flaming: 0 };
+    user.moodHistory.forEach(e => { if (e.mood) counts[e.mood]++; });
+    return Object.entries(counts).map(([name, val]) => ({ name, val }));
+  }, [user.moodHistory]);
 
   const handleSaveDiary = () => {
     if (!diaryTitle.trim() || !diaryContent.trim()) return;
@@ -85,507 +54,236 @@ const MoodSection: React.FC<MoodSectionProps> = ({ user, posts, onPost, onHeart,
       mood: diaryMood,
       timestamp: Date.now()
     };
-    onAddDiaryEntry(newEntry);
+    onUpdate({ diaryEntries: [newEntry, ...user.diaryEntries] });
+    setIsAddingDiary(false);
     setDiaryTitle('');
     setDiaryContent('');
-    setIsAddingDiary(false);
+    
+    // Reward
+    onReward();
+    triggerAnimation('diary', diaryTitle);
   };
 
-  const handleStartEdit = (post: Post) => {
-    setEditingPostId(post.id);
-    setEditBuffer(post.content);
+  const handleScanAnswer = (moodImpact: Mood) => {
+    if (moodImpact) {
+      setScanScores(prev => ({ ...prev, [moodImpact]: (prev[moodImpact] || 0) + 1 }));
+    }
+    
+    if (scanStep < SCAN_QUESTIONS.length - 1) {
+      setScanStep(scanStep + 1);
+    } else {
+      const scores = { ...scanScores };
+      if (moodImpact) scores[moodImpact] = (scores[moodImpact] || 0) + 1;
+      
+      const sorted = Object.entries(scores).sort((a: [string, number], b: [string, number]) => b[1] - a[1]);
+      setScanResult((sorted[0]?.[0] as Mood) || 'Normal');
+    }
   };
 
-  const handleSaveEdit = async () => {
-    if (!editingPostId || !editBuffer.trim()) return;
-    onEditPost(editingPostId, editBuffer);
-    setEditingPostId(null);
+  const resetScan = () => {
+    setScanStep(0);
+    setScanScores({});
+    setScanResult(null);
   };
 
-  const handleAddComment = (postId: string) => {
-    if (isGuest || isOffline) return;
-    const text = commentInputs[postId];
-    if (!text?.trim()) return;
-    onComment(postId, text);
-    setCommentInputs(prev => ({ ...prev, [postId]: '' }));
-  };
-
-  const handleReply = (postId: string, commentId: string) => {
-    if (isGuest || isOffline || !replyContent.trim()) return;
-    onCommentInteraction(postId, commentId, 'reply', replyContent);
-    setReplyContent('');
-    setReplyingTo(null);
-  };
-
-  const renderComment = (postId: string, comment: Comment, depth = 0) => (
-    <div key={comment.id} className={`mt-4 ${depth > 0 ? 'ml-6 md:ml-10 border-l-2 border-black/5 pl-4' : ''}`}>
-      <div className="flex items-start gap-3">
-        <button onClick={() => onNavigateToProfile(comment.author)} className="w-8 h-8 rounded-lg bg-custom text-white font-black flex items-center justify-center shrink-0 text-sm italic active:scale-95 transition-transform">{comment.author[0].toUpperCase()}</button>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <button onClick={() => onNavigateToProfile(comment.author)} className="font-black text-xs hover:text-custom transition-colors">@{comment.author}</button>
-            <span className="text-[8px] font-black opacity-30 uppercase tracking-widest">{new Date(comment.timestamp).toLocaleDateString()}</span>
-          </div>
-          <p className="text-sm font-bold opacity-80 mt-1 leading-relaxed">"{comment.text}"</p>
-          <div className="flex items-center gap-4 mt-2">
-            <button disabled={isGuest || isOffline} onClick={() => onCommentInteraction(postId, comment.id, 'heart')} className={`flex items-center gap-1 text-[9px] font-black uppercase text-custom transition-transform active:scale-95 ${isGuest || isOffline ? 'opacity-30' : ''}`}><Heart size={12} fill={comment.hearts > 0 ? "currentColor" : "none"} /> {comment.hearts} Sync</button>
-            <button 
-              disabled={isGuest || isOffline}
-              onClick={() => setReplyingTo(replyingTo?.commentId === comment.id ? null : { postId, commentId: comment.id })} 
-              className={`flex items-center gap-1 text-[9px] font-black uppercase text-blue-500 transition-transform active:scale-95 ${isGuest || isOffline ? 'opacity-30' : ''}`}
-            >
-              <Reply size={12} /> Echo
-            </button>
-          </div>
-          
-          <AnimatePresence>
-            {replyingTo?.commentId === comment.id && !isGuest && !isOffline && (
-              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="mt-3 overflow-hidden">
-                <div className="flex gap-2">
-                  <input 
-                    autoFocus
-                    type="text" 
-                    value={replyContent} 
-                    onChange={e => setReplyContent(e.target.value)}
-                    placeholder="Echo back..."
-                    className={`flex-1 p-2 rounded-xl border-2 text-[10px] font-bold outline-none focus:border-custom ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-gray-50 border-gray-100'}`}
-                    onKeyPress={e => e.key === 'Enter' && handleReply(postId, comment.id)}
-                  />
-                  <button onClick={() => handleReply(postId, comment.id)} className="bg-custom text-white px-3 rounded-xl shadow-md transition-transform active:scale-95"><Send size={12} /></button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-      {comment.replies && comment.replies.map(reply => renderComment(postId, reply, depth + 1))}
-    </div>
-  );
-
-  const handleTeller = () => {
-    if (!tellerQuestion.trim()) return;
-    setIsTellerLoading(true);
+  const handleFortune = () => {
+    if(!fortuneQuestion.trim()) return;
+    setIsConsulting(true);
+    setFortuneAnswer('');
+    
+    // Non-AI logic based on 25% probability per option
     setTimeout(() => {
-      const rand = Math.random();
-      let result = '';
-      if (rand < 0.2) result = 'YES. The stars have spoken!';
-      else if (rand < 0.4) result = 'NO. The frequency is blocked.';
-      else if (rand < 0.6) result = 'MAYBE. The vibes are still charging.';
-      else if (rand < 0.8) result = 'SUPER YES! The universe is screaming it!';
-      else result = 'SUPER NO! Not in this city, or any other.';
-      setTellerResponse(result);
-      setIsTellerLoading(false);
-    }, 1200);
+        const rand = Math.random();
+        let answer = "";
+        if (rand < 0.25) answer = "Yes";
+        else if (rand < 0.50) answer = "No";
+        else if (rand < 0.75) answer = "Maybe Yes";
+        else answer = "Maybe No";
+        
+        setFortuneAnswer(answer);
+        setIsConsulting(false);
+    }, 1500);
   };
 
-  const startQuiz = () => {
-    setQuizActive(true);
-    setQuizStep(0);
-    setQuizScores({ Happy: 0, Angry: 0, Tired: 0, Normal: 0, Excited: 0 });
-    setQuizResult(null);
-  };
-
-  const QUIZ_STEPS = [
-    { q: "How happy do you feel right now?", options: ["Very!", "A little", "Not much", "Not at all"], scores: ["Happy", "Normal", "Tired", "Angry"] },
-    { q: "Are you feeling sleepy?", options: ["No, I'm awake!", "A tiny bit", "I need a nap", "I'm a zombie"], scores: ["Excited", "Normal", "Tired", "Tired"] },
-    { q: "Are you mad at anyone?", options: ["No, I'm chill", "Just a bit", "Maybe one person", "I'm so angry!"], scores: ["Happy", "Normal", "Angry", "Angry"] },
-    { q: "Do you feel excited about today?", options: ["Yes, so much!", "Maybe a bit", "Not really", "Zero excitement"], scores: ["Excited", "Excited", "Normal", "Tired"] },
-    { q: "How fast is your brain working?", options: ["Super fast!", "Normal speed", "A bit slow", "It's stuck"], scores: ["Excited", "Normal", "Tired", "Normal"] },
-    { q: "Do you want to hug a pet?", options: ["Yes, please!", "Sure", "Not really", "No way"], scores: ["Happy", "Happy", "Normal", "Angry"] },
-    { q: "How much do you like today?", options: ["I love it!", "It's okay", "It's boring", "I hate it"], scores: ["Happy", "Normal", "Tired", "Angry"] },
-    { q: "Are you busy right now?", options: ["Very busy!", "A little bit", "Not at all", "I'm bored"], scores: ["Excited", "Normal", "Happy", "Tired"] },
-    { q: "Do you feel like dancing?", options: ["Yes, right now!", "Maybe later", "No, too tired", "Not my vibe"], scores: ["Excited", "Happy", "Tired", "Normal"] },
-    { q: "Pick your favorite color!", options: ["Yellow", "Blue", "Red", "Green"], scores: ["Happy", "Tired", "Angry", "Normal"] }
+  const SCAN_QUESTIONS = [
+    { q: "How fast is your heart beating right now?", opts: [{ l: "Very fast!", m: "Excited" }, { l: "Calm", m: "Normal" }, { l: "A bit heavy", m: "Tired" }, { l: "Pounding!", m: "Angry" }] },
+    { q: "Do you feel like dancing?", opts: [{ l: "Yes, definitely!", m: "Wonderful" }, { l: "Maybe later", m: "Happy" }, { l: "Too tired", m: "Tired" }, { l: "Not at all", m: "Angry" }] },
+    { q: "How bright does the screen look?", opts: [{ l: "Perfectly vibrant", m: "Excited" }, { l: "Okay", m: "Normal" }, { l: "A bit dull", m: "Tired" }, { l: "It's annoying", m: "Angry" }] },
+    { q: "Pick an emoji!", opts: [{ l: "✨", m: "Wonderful" }, { l: "🔥", m: "Flaming" }, { l: "💤", m: "Tired" }, { l: "😐", m: "Normal" }] },
+    { q: "Are you hungry?", opts: [{ l: "For a feast!", m: "Excited" }, { l: "Just a snack", m: "Happy" }, { l: "No, too stressed", m: "Angry" }, { l: "Just thirsty", m: "Normal" }] },
+    { q: "What's the vibe of your thoughts?", opts: [{ l: "Clear and sunny", m: "Wonderful" }, { l: "Steady flow", m: "Normal" }, { l: "Racing like a car", m: "Excited" }, { l: "Stuck in mud", m: "Tired" }] },
   ];
 
-  const handleQuizChoice = (idx: number) => {
-    const currentStep = QUIZ_STEPS[quizStep];
-    const moodKey = currentStep.scores[idx];
-    const updatedScores = { ...quizScores };
-    if (moodKey) {
-      updatedScores[moodKey] = (updatedScores[moodKey] || 0) + 1;
-      setQuizScores(updatedScores);
-    }
-    const nextStep = quizStep + 1;
-    if (nextStep < QUIZ_STEPS.length) {
-      setQuizStep(nextStep);
-    } else {
-      const sortedEntries = Object.entries(updatedScores).sort((a, b) => (b[1] as number) - (a[1] as number));
-      setQuizResult(sortedEntries[0][0]);
-    }
-  };
-
-  const formatTime = (ts: number) => {
-    const diff = Date.now() - ts;
-    if (diff < 60000) return 'Just now';
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-    return new Date(ts).toLocaleDateString();
-  };
-
-  const diaryEntries = user.diaryEntries || [];
-
   return (
-    <div className="flex flex-col gap-6 pb-20 h-full min-h-0">
+    <div className="flex flex-col h-full space-y-6 pb-20">
       <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 shrink-0">
-        {['Express', 'Diary', 'Teller', 'Scan', 'Mood Pet'].map((t) => (
+        {(['Statistics', 'Diary', 'Mood Pet', 'Scan', 'Teller'] as const).map(tabName => (
           <button 
-            key={t} 
-            onClick={() => setSubTab(t as any)} 
-            className={`px-5 py-2.5 rounded-full font-black text-[10px] md:text-xs transition-all whitespace-nowrap uppercase tracking-tighter border-b-4 ${subTab === t ? 'bg-custom border-black/20 text-white shadow-lg translate-y-[-2px]' : isDarkMode ? 'bg-slate-800 border-slate-900 text-white/30' : 'bg-white border-gray-100 text-slate-500'} ${isOffline && t === 'Express' ? 'border-red-500/30 grayscale-[0.5]' : ''}`}
+            key={tabName} 
+            onClick={() => setSubTab(tabName)}
+            className={`px-5 py-3 rounded-full font-black text-xs uppercase transition-all whitespace-nowrap border-b-4 ${subTab === tabName ? 'bg-indigo-600 text-white shadow-lg translate-y-[-2px]' : isDarkMode ? 'bg-white/5 border-black text-white/40' : 'bg-white border-gray-100 text-slate-500 shadow-sm'}`}
           >
-            {t === 'Express' && isOffline && <WifiOff size={12} className="inline mr-1 text-red-600" />}
-            {t}
+            {tabName === 'Mood Pet' ? t('moodPet', language) : t(tabName.toLowerCase() as any, language) || tabName}
           </button>
         ))}
       </div>
 
-      <div className="flex-1 min-h-0 relative">
+      <div className="flex-1">
         <AnimatePresence mode="wait">
-          {subTab === 'Express' && (
-            <motion.div key="express" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full overflow-y-auto fading-scrollbar pr-2 space-y-6 pb-20">
-              {isOffline ? (
-                <div className={`p-8 rounded-[2.5rem] ${isDarkMode ? 'bg-slate-900' : 'bg-white'} border-4 border-dashed border-red-600/30 flex flex-col items-center justify-center text-center py-20`}>
-                  <WifiOff size={60} className="mb-6 text-red-600 opacity-60 animate-pulse" />
-                  <h3 className="text-2xl font-black uppercase italic tracking-tighter mb-4 text-red-600">Signal Severed</h3>
-                  <p className="text-[12px] font-black uppercase tracking-widest text-red-600/60 leading-relaxed max-w-xs">
-                    Metropolis Express frequencies require a live neural link. Broadcasting is disabled until connection is restored.
-                  </p>
+          {subTab === 'Statistics' && (
+            <motion.div key="stats" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+              <div className={`p-8 rounded-[3rem] ${isDarkMode ? 'bg-[#111]' : 'bg-white'} shadow-xl border-4 border-black/5`}>
+                <h4 className="text-xl font-black uppercase italic tracking-tighter mb-6 flex items-center gap-3"><TrendingUp className="text-indigo-500"/> Overall Resonance</h4>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={lineData}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? '#333' : '#eee'} />
+                      <XAxis dataKey="name" hide />
+                      <YAxis domain={[0, 100]} hide />
+                      <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', fontWeight: 'bold' }} />
+                      <Line type="monotone" dataKey="score" stroke="#46178f" strokeWidth={5} dot={{ fill: '#46178f', r: 5 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
-              ) : !isGuest ? (
-                <div className={`p-6 md:p-8 rounded-[2.5rem] ${isDarkMode ? 'bg-slate-900' : 'bg-white'} border-4 border-black/5 shadow-xl`}>
-                  <textarea 
-                    value={postContent} 
-                    onChange={(e) => setPostContent(e.target.value)} 
-                    disabled={isBroadcasting}
-                    placeholder={isBroadcasting ? "Sending Signal..." : (postVisibility === 'global' ? "Transmit a global frequency..." : "Whisper to your circle...")} 
-                    className={`w-full ${isDarkMode ? 'bg-slate-800 text-white' : 'bg-gray-50 text-slate-900'} p-6 rounded-3xl border-2 border-black/5 focus:border-custom outline-none font-bold text-lg shadow-inner min-h-[120px]`} 
-                  />
-                  <div className="flex flex-wrap justify-between items-center mt-6 gap-4">
-                    <div className="flex gap-2 bg-black/5 p-1.5 rounded-2xl">
-                      <button onClick={() => setPostVisibility('global')} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${postVisibility === 'global' ? 'bg-custom text-white' : 'opacity-40'}`}><Globe size={14}/> GLOBAL</button>
-                      <button onClick={() => setPostVisibility('circle')} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${postVisibility === 'circle' ? 'bg-custom text-white' : 'opacity-40'}`}><Users size={14}/> CIRCLE</button>
-                    </div>
-                    <button 
-                      onClick={handlePost} 
-                      disabled={isBroadcasting || !postContent.trim()}
-                      className="kahoot-button-custom px-8 py-4 text-white rounded-2xl font-black text-xs flex items-center gap-2 active:scale-95 transition-transform disabled:opacity-50"
-                    >
-                      {isBroadcasting ? <Clock size={18} className="animate-spin" /> : <Send size={18} />} 
-                      {isBroadcasting ? 'SENDING...' : 'BROADCAST'}
-                    </button>
-                  </div>
+              </div>
+              <div className={`p-8 rounded-[3rem] ${isDarkMode ? 'bg-[#111]' : 'bg-white'} shadow-xl border-4 border-black/5`}>
+                <h4 className="text-xl font-black uppercase italic tracking-tighter mb-6 flex items-center gap-3"><TrendingUp className="text-green-500"/> Frequency Distribution</h4>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={barData}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? '#333' : '#eee'} />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold' }} />
+                      <YAxis hide />
+                      <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', fontWeight: 'bold' }} />
+                      <Bar dataKey="val" fill="#26890c" radius={[10, 10, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
-              ) : (
-                <div className={`p-8 rounded-[2.5rem] ${isDarkMode ? 'bg-slate-800' : 'bg-white'} border-4 border-dashed border-black/10 flex flex-col items-center justify-center text-center`}>
-                  <Lock size={40} className="mb-4 opacity-20" />
-                  <p className="text-[10px] font-black uppercase tracking-widest opacity-40 leading-relaxed max-w-xs">
-                    Sign in to transmit your frequencies to the metropolis.
-                  </p>
-                </div>
-              )}
-
-              {/* Feed logic remains for when user IS online or has cached feed */}
-              {!isOffline && (
-                <>
-                  <div className="flex gap-2 bg-black/5 p-1 rounded-xl w-fit">
-                    <button onClick={() => setFeedFilter('Global')} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase ${feedFilter === 'Global' ? 'bg-white text-custom shadow-sm' : 'opacity-40'}`}>Metropolis Feed</button>
-                    <button onClick={() => setFeedFilter('Circle')} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase ${feedFilter === 'Circle' ? 'bg-white text-custom shadow-sm' : 'opacity-40'}`}>Neural Circle</button>
-                  </div>
-
-                  <div className="space-y-6 pb-12">
-                    {filteredPosts.length > 0 ? filteredPosts.map(post => {
-                      const isAuthor = post.author === user.username;
-                      const isLiked = post.likes.includes(user.username);
-                      
-                      return (
-                        <motion.div key={post.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`p-6 rounded-[2rem] ${isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'} border-2 border-black/5 shadow-md`}>
-                          <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-3">
-                              <button onClick={() => onNavigateToProfile(post.author)} className="w-10 h-10 rounded-xl bg-custom text-white font-black shrink-0 text-xl flex items-center justify-center italic shadow-sm active:scale-95 transition-transform">{post.author[0].toUpperCase()}</button>
-                              <div>
-                                <button onClick={() => onNavigateToProfile(post.author)} className="font-black text-sm hover:text-custom transition-colors">@{post.author}</button>
-                                <p className="text-[9px] font-black opacity-30 uppercase tracking-widest flex items-center gap-1"><Clock size={10}/> {formatTime(post.timestamp)}</p>
-                              </div>
-                            </div>
-                            {isAuthor && !isGuest && !isOffline && (
-                              <div className="flex gap-2">
-                                 <button onClick={() => handleStartEdit(post)} className="p-2 bg-black/5 hover:bg-black/10 rounded-xl transition-all text-blue-500"><Edit size={16}/></button>
-                                 <button onClick={() => onDeletePost(post.id)} className="p-2 bg-black/5 hover:bg-black/10 rounded-xl transition-all text-red-500"><Trash2 size={16}/></button>
-                              </div>
-                            )}
-                          </div>
-
-                          {editingPostId === post.id && !isGuest && !isOffline ? (
-                            <div className="space-y-4 mb-6">
-                               <textarea value={editBuffer} onChange={e => setEditBuffer(e.target.value)} className={`w-full p-4 rounded-2xl border-2 font-bold ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-gray-50 border-gray-100 text-slate-900'} outline-none focus:border-custom`} rows={3} />
-                               <div className="flex gap-2">
-                                 <button onClick={handleSaveEdit} className="bg-custom text-white px-4 py-2 rounded-xl font-black text-[10px] uppercase shadow-md">Update Signal</button>
-                                 <button onClick={() => setEditingPostId(null)} className="bg-black/5 px-4 py-2 rounded-xl font-black text-[10px] uppercase">Cancel</button>
-                               </div>
-                            </div>
-                          ) : (
-                            <>
-                              {post.isRepost && <div className="flex items-center gap-2 text-[10px] font-black text-green-500 uppercase italic mb-2"><Repeat size={12}/> Echoing: @{post.originalAuthor}</div>}
-                              <p className="text-base font-bold italic opacity-90 mb-6 leading-relaxed break-words">"{post.content}"</p>
-                            </>
-                          )}
-
-                          <div className="flex items-center gap-6 pt-4 border-t border-black/5">
-                            <div className="flex items-center gap-1.5">
-                               <button disabled={isGuest || isOffline} onClick={() => onHeart(post.id)} className={`flex items-center gap-1.5 ${isLiked ? 'text-custom' : 'opacity-40'} font-black text-[10px] uppercase transition-all active:scale-95 ${isGuest || isOffline ? 'cursor-not-allowed' : ''}`}>
-                                 <Heart size={16} fill={isLiked ? "currentColor" : "none"} />
-                               </button>
-                               <button onClick={() => setLikersModalPost(post)} className="text-custom font-black text-[10px] hover:underline transition-all">
-                                 {post.likes.length} SYNC
-                               </button>
-                            </div>
-                            <button onClick={() => setExpandedPostId(expandedPostId === post.id ? null : post.id)} className="flex items-center gap-1.5 text-blue-500 font-black text-[10px] uppercase"><MessageSquare size={16} /> {post.comments?.length || 0} ECHO</button>
-                            <button disabled={isGuest || isOffline} onClick={() => onRepost(post)} className={`flex items-center gap-1.5 text-green-500 font-black text-[10px] uppercase transition-transform active:scale-95 ${isGuest || isOffline ? 'opacity-30 cursor-not-allowed' : ''}`}><Repeat size={16} /> ECHO RE-SIGNAL</button>
-                          </div>
-
-                          <AnimatePresence>
-                            {expandedPostId === post.id && (
-                              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                                 <div className="pt-6 space-y-4">
-                                    {!isGuest && !isOffline && (
-                                      <div className="flex gap-2">
-                                        <input 
-                                          type="text" 
-                                          value={commentInputs[post.id] || ''} 
-                                          onChange={e => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
-                                          placeholder="Add an echo to this signal..." 
-                                          className={`flex-1 p-3 rounded-xl border-2 text-xs font-bold outline-none focus:border-custom ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-gray-50 border-gray-100'}`}
-                                          onKeyPress={e => e.key === 'Enter' && handleAddComment(post.id)}
-                                        />
-                                        <button onClick={() => handleAddComment(post.id)} className="bg-custom text-white px-4 rounded-xl shadow-md transition-transform active:scale-95"><Send size={16} /></button>
-                                      </div>
-                                    )}
-
-                                    <div className="space-y-4 max-h-[400px] overflow-y-auto fading-scrollbar pr-2">
-                                      {post.comments?.length > 0 ? (
-                                        post.comments.map(c => renderComment(post.id, c))
-                                      ) : (
-                                        <p className="text-[10px] font-black uppercase opacity-20 text-center py-4 tracking-widest">No echoes yet.</p>
-                                      )}
-                                    </div>
-                                 </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </motion.div>
-                      );
-                    }) : <div className="py-20 text-center opacity-20 font-black uppercase italic text-lg tracking-widest">The metropolis is quiet.</div>}
-                  </div>
-                </>
-              )}
+              </div>
             </motion.div>
           )}
 
           {subTab === 'Diary' && (
-            <motion.div key="diary" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full overflow-y-auto fading-scrollbar pr-2 space-y-6 pb-20">
-              <div className="flex justify-between items-center px-4 py-2 bg-indigo-50/50 dark:bg-slate-800/50 rounded-3xl border border-indigo-100/20">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-[#26890c] rounded-2xl text-white shadow-lg"><Book size={20} /></div>
-                  <h3 className="text-xl font-black italic uppercase tracking-tighter">Archives</h3>
-                </div>
-                <button 
-                  onClick={() => setIsAddingDiary(true)} 
-                  className="kahoot-button-green px-5 py-2.5 rounded-2xl text-white font-black flex items-center gap-2 shadow-lg active:scale-95 text-[10px] uppercase tracking-widest"
-                >
-                  <Plus size={16} /> WRITE LOG
-                </button>
+            <motion.div key="diary" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+              <div className="flex justify-between items-center px-4">
+                <h4 className="text-2xl font-black uppercase italic tracking-tighter flex items-center gap-3"><Book className="text-indigo-600"/> Personal Archives</h4>
+                <button onClick={() => setIsAddingDiary(true)} className="kahoot-button-green px-6 py-3 rounded-2xl text-white font-black text-xs flex items-center gap-2 shadow-lg"><Plus size={18} /> NEW LOG</button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
-                {diaryEntries.length > 0 ? diaryEntries.map(entry => (
-                  <motion.div 
-                    key={entry.id} 
-                    initial={{ opacity: 0, rotateY: -10 }} 
-                    animate={{ opacity: 1, rotateY: 0 }} 
-                    className={`relative p-8 rounded-[2.5rem] ${isDarkMode ? 'bg-slate-900 border-white/5' : 'bg-orange-50/30 border-orange-100'} border-4 shadow-xl overflow-hidden group hover:-translate-y-1 transition-all`}
-                  >
-                    <div className="absolute top-0 right-0 w-16 h-16 bg-orange-400/10 dark:bg-orange-400/5 rounded-bl-[4rem] flex items-center justify-center text-orange-500/30">
-                       <Bookmark size={24} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {user.diaryEntries.length > 0 ? user.diaryEntries.map(entry => (
+                  <div key={entry.id} className={`p-6 rounded-[2.5rem] ${isDarkMode ? 'bg-[#111]' : 'bg-white'} border-4 border-black/5 shadow-md group relative`}>
+                    <button onClick={() => onUpdate({ diaryEntries: user.diaryEntries.filter(e => e.id !== entry.id) })} className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
+                    <div className="flex items-center gap-2 mb-2">
+                       <span className="text-[9px] font-black uppercase opacity-40">{new Date(entry.timestamp).toLocaleDateString()}</span>
+                       <span className="bg-indigo-600/10 text-indigo-600 px-2 rounded-lg text-[9px] font-black uppercase">{entry.mood}</span>
                     </div>
-                    
-                    <div className="relative z-10">
-                      <div className="flex items-start gap-4 mb-6">
-                        <div className="w-14 h-14 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center text-3xl shadow-md border border-black/5 shrink-0">
-                          {entry.mood === 'Wonderful' ? '✨' : entry.mood === 'Excited' ? '🤩' : entry.mood === 'Happy' ? '😊' : entry.mood === 'Normal' ? '😐' : entry.mood === 'Tired' ? '😴' : entry.mood === 'Angry' ? '😡' : '🔥'}
-                        </div>
-                        <div className="min-w-0">
-                          <h4 className="font-black text-lg uppercase italic leading-none mb-1 truncate">{entry.title}</h4>
-                          <div className="flex items-center gap-2 opacity-30">
-                            <Calendar size={12} />
-                            <p className="text-[9px] font-black uppercase tracking-[0.2em]">{new Date(entry.timestamp).toLocaleDateString()}</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="relative">
-                        <div className="absolute -left-2 top-0 bottom-0 w-0.5 bg-orange-400/20 dark:bg-orange-400/10" />
-                        <p className="text-sm md:text-base font-bold opacity-80 leading-relaxed italic pl-4 line-clamp-4 dark:text-orange-50">"{entry.content}"</p>
-                      </div>
-                    </div>
-                    <div className="mt-6 flex justify-end">
-                      <span className="text-[8px] font-black uppercase opacity-20 tracking-widest">Log #{entry.id.slice(0, 4)}</span>
-                    </div>
-                  </motion.div>
-                )) : (
-                  <div className="col-span-full py-20 text-center opacity-20 font-black uppercase italic text-lg tracking-widest flex flex-col items-center gap-4">
-                    <Book size={60} />
-                    The archives are silent...
+                    <h5 className="text-lg font-black uppercase italic mb-2 line-clamp-1">{entry.title}</h5>
+                    <p className="text-sm font-bold opacity-60 leading-relaxed line-clamp-3">"{entry.content}"</p>
                   </div>
-                )}
+                )) : <div className="col-span-full py-20 text-center opacity-20 font-black uppercase">No entries yet.</div>}
               </div>
 
-              <AnimatePresence>
-                {isAddingDiary && (
-                  <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/95 backdrop-blur-md">
-                    <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className={`${isDarkMode ? 'bg-slate-900' : 'bg-[#fffcf0]'} w-full max-w-2xl rounded-[3rem] p-10 border-4 border-black/5 shadow-2xl relative flex flex-col max-h-[90vh] text-slate-900`}>
-                       <button onClick={() => setIsAddingDiary(false)} className="absolute top-6 right-6 opacity-40 hover:opacity-100 transition-all dark:text-white"><X size={32}/></button>
-                       
-                       <div className="mb-8 dark:text-white">
-                         <div className="flex items-center gap-3 mb-2">
-                           <Book className="text-[#26890c]" size={32} />
-                           <h3 className="text-3xl font-black italic uppercase tracking-tighter leading-none">Record Neural Log</h3>
-                         </div>
-                         <p className="text-[10px] font-black opacity-40 uppercase tracking-widest ml-11">Metropolis Private Archive</p>
-                       </div>
-
-                       <div className="space-y-6 overflow-y-auto fading-scrollbar pr-2 dark:text-white">
-                          <div className="space-y-2">
-                            <p className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2">Log Designation (Title)</p>
-                            <input 
-                              type="text" 
-                              value={diaryTitle} 
-                              onChange={e => setDiaryTitle(e.target.value)} 
-                              placeholder="Designation of your frequency..." 
-                              className={`w-full p-4 rounded-2xl border-2 font-black text-lg outline-none focus:border-custom ${isDarkMode ? 'bg-slate-800 border-white/10 text-white' : 'bg-black/5 border-transparent text-slate-900'}`}
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <p className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2">Emotional Tone</p>
-                            <div className="flex gap-2 overflow-x-auto no-scrollbar py-2">
-                               {['Wonderful', 'Excited', 'Happy', 'Normal', 'Tired', 'Angry', 'Flaming'].map(m => (
-                                 <button 
-                                   key={m} 
-                                   onClick={() => setDiaryMood(m as Mood)} 
-                                   className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all whitespace-nowrap border-2 ${diaryMood === m ? 'bg-[#26890c] text-white border-[#26890c]' : isDarkMode ? 'bg-white/5 border-transparent text-white opacity-40' : 'bg-black/5 border-transparent text-slate-500 opacity-60'}`}
-                                 >
-                                   {m}
-                                 </button>
-                               ))}
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <p className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2">Frequency Content (Story)</p>
-                            <div className="relative">
-                               <textarea 
-                                value={diaryContent} 
-                                onChange={e => setDiaryContent(e.target.value)} 
-                                placeholder="Pour your soul into the city archives..." 
-                                className={`w-full p-8 rounded-[2.5rem] border-2 font-bold text-base outline-none focus:border-custom min-h-[250px] italic leading-relaxed ${isDarkMode ? 'bg-slate-800 border-white/10 text-white' : 'bg-orange-50/30 border-orange-200/50 text-slate-800'}`}
-                              ></textarea>
-                              {!isDarkMode && <div className="absolute top-0 bottom-0 left-6 w-0.5 bg-orange-200/50" />}
-                            </div>
-                          </div>
-
-                          <button 
-                            onClick={handleSaveDiary} 
-                            disabled={!diaryTitle.trim() || !diaryContent.trim()}
-                            className="kahoot-button-green w-full py-5 rounded-2xl text-white font-black uppercase text-base shadow-xl active:scale-95 disabled:opacity-50 mt-4 transition-all"
-                          >
-                            SEAL PRIVATE ARCHIVE
-                          </button>
-                       </div>
-                    </motion.div>
-                  </div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          )}
-
-          {subTab === 'Teller' && (
-            <motion.div key="teller" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={`h-full overflow-y-auto fading-scrollbar pr-2 p-10 rounded-[3rem] ${isDarkMode ? 'bg-slate-900' : 'bg-white'} border-4 border-black/5 shadow-xl text-center flex flex-col items-center pb-20`}>
-               <Sparkles className="mb-6 text-custom shrink-0" size={60} />
-               <h2 className="text-2xl md:text-4xl font-black mb-8 uppercase italic tracking-tighter shrink-0">Fortune Oracle</h2>
-               <input value={tellerQuestion} onChange={e => setTellerQuestion(e.target.value)} placeholder="Type a question for the stars..." className={`w-full max-w-xl p-5 rounded-2xl border-2 font-black text-center mb-6 outline-none focus:border-custom shadow-inner shrink-0 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-gray-50 border-gray-100'}`} />
-               <button onClick={handleTeller} disabled={isTellerLoading} className="kahoot-button-custom px-10 py-5 rounded-2xl text-white font-black uppercase text-sm shadow-lg active:scale-95 transition-transform shrink-0">{isTellerLoading ? 'CALCULATING...' : 'ASK THE STARS'}</button>
-               {tellerResponse && (
-                 <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="mt-8 p-6 rounded-3xl bg-custom/5 border-l-8 border-custom italic font-bold text-lg max-w-lg">
-                   "{tellerResponse}"
-                 </motion.div>
-               )}
-            </motion.div>
-          )}
-
-          {subTab === 'Scan' && (
-            <motion.div key="scan" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={`h-full overflow-y-auto fading-scrollbar pr-2 p-10 rounded-[3rem] ${isDarkMode ? 'bg-slate-900' : 'bg-white'} border-4 border-black/5 shadow-xl text-center flex flex-col items-center pb-20`}>
-               <Brain className="mb-6 text-blue-500 shrink-0" size={60} />
-               <h2 className="text-2xl md:text-4xl font-black mb-6 uppercase italic tracking-tighter shrink-0">Emotional Scan</h2>
-               {!quizActive ? (
-                 <>
-                   <p className="opacity-40 font-bold uppercase tracking-widest text-[10px] mb-10">See your mood signature in 10 quick steps</p>
-                   <button onClick={startQuiz} className="kahoot-button-blue px-10 py-5 rounded-2xl text-white font-black uppercase text-sm shadow-lg shrink-0">Start Scan</button>
-                 </>
-               ) : (
-                 <div className="w-full max-w-lg space-y-8">
-                   {quizResult ? (
-                     <div className="space-y-6">
-                        <div className="text-6xl mb-4">✨</div>
-                        <h3 className="text-2xl font-black italic uppercase">Scan Complete</h3>
-                        <div className="p-6 rounded-3xl bg-custom/10 border-2 border-custom/20">
-                          <p className="text-[10px] font-bold opacity-70 uppercase tracking-widest mb-2">Neural Signature</p>
-                          <p className="text-2xl font-black text-custom italic uppercase">{quizResult}</p>
-                        </div>
-                        <button onClick={() => setQuizActive(false)} className="kahoot-button-custom px-8 py-3 rounded-xl text-white font-black uppercase text-xs">Reset Scan</button>
-                     </div>
-                   ) : (
-                     <div className="space-y-8">
-                        <div className="h-2 bg-black/10 rounded-full overflow-hidden shrink-0"><motion.div className="h-full bg-blue-500" initial={{ width: 0 }} animate={{ width: `${((quizStep + 1) / QUIZ_STEPS.length) * 100}%` }} /></div>
-                        <p className="text-lg font-black italic">"{QUIZ_STEPS[quizStep].q}"</p>
-                        <div className="grid grid-cols-2 gap-4">
-                           {QUIZ_STEPS[quizStep].options.map((opt, i) => (
-                             <button key={opt} onClick={() => handleQuizChoice(i)} className="kahoot-button-custom py-4 rounded-xl text-white font-black uppercase text-[10px] active:scale-95 transition-transform">{opt}</button>
+              {isAddingDiary && (
+                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md">
+                    <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className={`${isDarkMode ? 'bg-slate-900' : 'bg-white'} w-full max-w-lg rounded-[3rem] p-10 shadow-2xl border-4 border-white/10 relative`}>
+                      <button onClick={() => setIsAddingDiary(false)} className="absolute top-6 right-6 opacity-40"><X size={32}/></button>
+                      <h3 className="text-3xl font-black uppercase italic mb-8">New Entry</h3>
+                      <div className="space-y-4">
+                         <input value={diaryTitle} onChange={e => setDiaryTitle(e.target.value)} placeholder="Entry Title..." className="w-full p-4 rounded-xl border-2 bg-black/5 font-black outline-none focus:border-green-500" />
+                         <textarea value={diaryContent} onChange={e => setDiaryContent(e.target.value)} placeholder="Dear Diary..." className="w-full p-4 rounded-xl border-2 bg-black/5 font-bold outline-none focus:border-green-500 min-h-[150px]" />
+                         <div className="flex gap-2 overflow-x-auto pb-2">
+                           {['Wonderful','Happy','Normal','Tired','Angry'].map(m => (
+                             <button key={m} onClick={() => setDiaryMood(m as Mood)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase border-2 ${diaryMood === m ? 'bg-green-600 text-white border-green-600' : 'border-black/10'}`}>{m}</button>
                            ))}
-                        </div>
-                        <p className="text-[10px] font-black uppercase opacity-30">Step {quizStep + 1} of {QUIZ_STEPS.length}</p>
-                     </div>
-                   )}
+                         </div>
+                         <button onClick={handleSaveDiary} className="kahoot-button-green w-full py-5 rounded-2xl text-white font-black uppercase shadow-lg mt-4">ARCHIVE MEMORY</button>
+                      </div>
+                    </motion.div>
                  </div>
-               )}
+              )}
             </motion.div>
           )}
 
           {subTab === 'Mood Pet' && (
-            <motion.div key="pet" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full overflow-y-auto fading-scrollbar pr-2 pb-20">
-               <MoodPetSection user={user} isDarkMode={isDarkMode} onUpdate={onUpdatePet} onPost={onPost} isGuest={isGuest} />
+             <MoodPetSection user={user} onUpdate={onUpdate} isDarkMode={isDarkMode} language={language} />
+          )}
+
+          {subTab === 'Scan' && (
+            <motion.div key="scan" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center min-h-[500px]">
+                {!scanResult ? (
+                    <div className={`w-full max-w-xl p-8 rounded-[3rem] ${isDarkMode ? 'bg-[#111]' : 'bg-white'} border-4 border-black/5 shadow-2xl text-center`}>
+                        <div className="mb-8">
+                            <h2 className="text-3xl font-black uppercase italic tracking-tighter mb-2">System Diagnostic</h2>
+                            <p className="text-xs font-bold uppercase opacity-40 tracking-widest">Question {scanStep + 1} / {SCAN_QUESTIONS.length}</p>
+                            <div className="w-full h-2 bg-black/10 rounded-full mt-4 overflow-hidden">
+                                <motion.div animate={{ width: `${((scanStep + 1) / SCAN_QUESTIONS.length) * 100}%` }} className="h-full bg-blue-500"/>
+                            </div>
+                        </div>
+                        <h3 className="text-xl md:text-2xl font-black italic mb-10 min-h-[80px] flex items-center justify-center">
+                            "{SCAN_QUESTIONS[scanStep].q}"
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {SCAN_QUESTIONS[scanStep].opts.map((opt, i) => (
+                                <button 
+                                    key={i} 
+                                    onClick={() => handleScanAnswer(opt.m as Mood)}
+                                    className="kahoot-button-blue py-4 rounded-2xl text-white font-black uppercase shadow-lg text-sm"
+                                >
+                                    {opt.l}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                ) : (
+                    <div className={`w-full max-w-xl p-10 rounded-[3rem] ${isDarkMode ? 'bg-[#111]' : 'bg-white'} border-4 border-black/5 shadow-2xl text-center`}>
+                        <HeartPulse size={80} className="mx-auto mb-6 text-red-500 animate-pulse"/>
+                        <p className="text-xs font-bold uppercase opacity-40 tracking-widest mb-2">Diagnosis Complete</p>
+                        <h2 className="text-5xl font-black uppercase italic tracking-tighter mb-6">{scanResult}</h2>
+                        <p className="text-sm font-bold opacity-70 mb-10">Your responses indicate a resonance frequency matching {scanResult} state. Recommended: Drink water and check City Hall for tasks.</p>
+                        <button onClick={resetScan} className="kahoot-button-green px-8 py-4 rounded-2xl text-white font-black uppercase shadow-lg">Run New Scan</button>
+                    </div>
+                )}
             </motion.div>
+          )}
+
+          {subTab === 'Teller' && (
+              <motion.div key="teller" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center min-h-[500px]">
+                  <div className={`w-full max-w-xl p-8 rounded-[3rem] ${isDarkMode ? 'bg-[#111]' : 'bg-white'} border-4 border-black/5 shadow-2xl text-center relative overflow-hidden`}>
+                      <Zap size={100} className={`absolute -top-6 -right-6 ${isConsulting ? 'text-purple-500 animate-spin' : 'text-purple-500/20'}`} />
+                      <h2 className="text-3xl font-black uppercase italic tracking-tighter mb-8">Destiny Predictor</h2>
+                      
+                      {!fortuneAnswer ? (
+                          <div className="space-y-6">
+                              <p className="text-sm font-bold opacity-60">Ask a "Yes" or "No" question to reveal your path...</p>
+                              <textarea 
+                                value={fortuneQuestion} 
+                                onChange={e => setFortuneQuestion(e.target.value)} 
+                                placeholder="Will I find success tomorrow?" 
+                                className="w-full p-4 rounded-2xl bg-black/5 font-black text-center outline-none focus:border-purple-500 border-2 min-h-[100px]"
+                              />
+                              <button 
+                                onClick={handleFortune} 
+                                disabled={isConsulting || !fortuneQuestion.trim()}
+                                className="kahoot-button-purple w-full py-5 rounded-2xl text-white font-black uppercase shadow-lg disabled:opacity-50"
+                              >
+                                {isConsulting ? 'Consulting Spirits...' : 'Reveal Probability'}
+                              </button>
+                          </div>
+                      ) : (
+                          <div className="space-y-8">
+                              <div className="p-8 bg-purple-500/10 rounded-[2rem] border-2 border-purple-500/20">
+                                  <h3 className="text-2xl md:text-3xl font-black italic text-purple-600 mb-2">The spirits reveal...</h3>
+                                  <p className="text-5xl font-black uppercase tracking-tighter text-purple-600">{fortuneAnswer}</p>
+                              </div>
+                              <button onClick={() => { setFortuneAnswer(''); setFortuneQuestion(''); }} className="text-xs font-black uppercase opacity-40 hover:opacity-100">Ask Another Question</button>
+                          </div>
+                      )}
+                  </div>
+              </motion.div>
           )}
         </AnimatePresence>
       </div>
-
-      {/* Likers Modal */}
-      <AnimatePresence>
-        {likersModalPost && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
-             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className={`w-full max-w-sm rounded-[3rem] p-8 ${isDarkMode ? 'bg-slate-900' : 'bg-white'} border-4 border-black/5 shadow-2xl relative`}>
-                <button onClick={() => setLikersModalPost(null)} className="absolute top-6 right-6 opacity-40 hover:opacity-100 transition-all"><X size={24}/></button>
-                <h3 className="text-xl font-black uppercase italic mb-6">Resonance Syncs</h3>
-                <div className="space-y-3 max-h-[300px] overflow-y-auto fading-scrollbar">
-                   {likersModalPost.likes.length > 0 ? likersModalPost.likes.map(liker => (
-                     <button key={liker} onClick={() => { onNavigateToProfile(liker); setLikersModalPost(null); }} className={`w-full p-3 rounded-2xl flex items-center gap-3 transition-all hover:bg-black/5`}>
-                       <div className="w-8 h-8 rounded-lg bg-custom text-white font-black flex items-center justify-center italic text-xs border-2 border-white/20 shrink-0">{liker[0].toUpperCase()}</div>
-                       <p className="text-[12px] font-black uppercase flex-1 text-left">@{liker}</p>
-                     </button>
-                   )) : <p className="text-xs font-bold opacity-30 uppercase text-center py-4">No one liked yet.</p>}
-                </div>
-             </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

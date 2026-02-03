@@ -1,95 +1,67 @@
 
 import React, { useMemo } from 'react';
-import { User, Post } from '../types';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Flame, Award, TrendingUp, ShieldCheck, Sparkles, RefreshCw } from 'lucide-react';
-import { STREAK_BADGES, DAILY_WISDOM } from '../constants';
+import { User } from '../types';
+import { WISDOM_OF_MOODERIA, t } from '../constants';
+import { Sparkles, Building2, Flame } from 'lucide-react';
 
 interface HomeSectionProps {
   user: User;
-  posts: Post[];
   isDarkMode: boolean;
-  onTriggerMood?: () => void;
+  language: 'English' | 'Filipino';
 }
 
-const HomeSection: React.FC<HomeSectionProps> = ({ user, posts, isDarkMode, onTriggerMood }) => {
-  const currentMood = user.moodHistory?.[user.moodHistory.length - 1]?.mood || 'Not set';
-  const earnedBadges = STREAK_BADGES.filter(b => user.moodStreak >= b.threshold);
-  
-  const todayWisdom = useMemo(() => {
-    const today = new Date();
-    const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
-    return DAILY_WISDOM[seed % DAILY_WISDOM.length];
+const HomeSection: React.FC<HomeSectionProps> = ({ user, isDarkMode, language }) => {
+  const dailyWisdom = useMemo(() => {
+    const today = new Date().toDateString();
+    let seed = 0;
+    for (let i = 0; i < today.length; i++) seed += today.charCodeAt(i);
+    return WISDOM_OF_MOODERIA[seed % WISDOM_OF_MOODERIA.length];
   }, []);
 
-  const chartData = useMemo(() => {
-    if (!user.moodHistory || user.moodHistory.length === 0) return [{ name: 'New', score: 0 }];
-    return user.moodHistory.slice(-7).map((entry, idx) => ({ name: `T${idx + 1}`, score: entry.score }));
-  }, [user.moodHistory]);
-
-  const happiness = useMemo(() => {
-    if (!user.moodHistory || user.moodHistory.length === 0) return 0;
-    const recent = user.moodHistory.slice(-5);
-    return Math.round(recent.reduce((acc, curr) => acc + curr.score, 0) / recent.length);
-  }, [user.moodHistory]);
-
   return (
-    <div className="space-y-6 md:space-y-8 pb-10 flex flex-col h-full min-h-0">
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 shrink-0">
-        <div className="text-center md:text-left w-full md:w-auto">
-          <h2 className={`text-4xl md:text-5xl font-black italic tracking-tighter uppercase ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Welcome, {user.displayName}!</h2>
-          <div className="flex items-center gap-3 mt-2 justify-center md:justify-start">
-             <p className="opacity-40 font-black uppercase tracking-[0.2em] text-[10px] md:text-xs">Tier: {user.title}</p>
-             <button onClick={onTriggerMood} className="bg-custom/10 text-custom px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border border-custom/20 hover:bg-custom hover:text-white transition-all flex items-center gap-1">
-               <RefreshCw size={10} /> Re-Sync Mood
-             </button>
-          </div>
+    <div className="space-y-8 pb-10">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div>
+          <h2 className={`text-4xl md:text-5xl font-black italic tracking-tighter uppercase ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{t('welcome', language)}</h2>
+          <p className="opacity-40 font-black uppercase tracking-[0.2em] text-xs">Home of the Vibrant Metropolis</p>
         </div>
-        
-        <div className="flex flex-wrap gap-3 w-full md:w-auto justify-center md:justify-end">
-          <div className="flex items-center gap-2 px-6 py-4 rounded-2xl bg-[#ffa602] text-white font-black shadow-xl streak-glow">
-            <Flame className="animate-pulse" size={24} />
-            <span className="uppercase text-lg">{user.moodStreak || 0} Day Streak</span>
+        <div className="bg-orange-500 text-white px-6 py-4 rounded-[2rem] shadow-xl flex items-center gap-3 border-b-8 border-orange-700">
+          <Flame size={28} className="animate-pulse" />
+          <div>
+            <p className="text-2xl font-black leading-none">{user.moodStreak}</p>
+            <p className="text-[10px] font-black uppercase opacity-60">{t('streak', language)}</p>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 shrink-0">
-        <div className={`p-6 md:p-8 rounded-[3rem] ${isDarkMode ? 'bg-[#111111]' : 'bg-white'} shadow-2xl border-b-[8px] border-blue-500/10`}>
-          <p className="text-[10px] font-black opacity-30 uppercase tracking-[0.4em] mb-4">Circles</p>
-          <p className="text-4xl md:text-5xl font-black text-[#1368ce] italic">{user.following.length}</p>
-        </div>
-        <div className={`p-6 md:p-8 rounded-[3rem] ${isDarkMode ? 'bg-[#111111]' : 'bg-white'} shadow-2xl border-b-[8px] border-green-500/10`}>
-          <p className="text-[10px] font-black opacity-30 uppercase tracking-[0.4em] mb-4">Citizens</p>
-          <p className="text-4xl md:text-5xl font-black text-[#26890c] italic">{user.followers.length}</p>
-        </div>
-        <div className={`col-span-2 md:col-span-1 p-6 md:p-8 rounded-[3rem] ${isDarkMode ? 'bg-[#111111]' : 'bg-white'} shadow-2xl border-b-[8px] border-red-500/10`}>
-          <p className="text-[10px] font-black opacity-30 uppercase tracking-[0.4em] mb-4">Harmony</p>
-          <div className="flex items-center gap-3"><p className="text-4xl md:text-5xl font-black text-[#e21b3c] italic">{happiness}%</p></div>
+      <div className={`p-10 md:p-16 rounded-[4rem] ${isDarkMode ? 'bg-[#111] border-white/5' : 'bg-white border-black/5'} border-4 shadow-2xl relative overflow-hidden`}>
+        <Building2 className="absolute -bottom-10 -right-10 text-indigo-500/10" size={300} />
+        <div className="relative z-10 space-y-6">
+          <div className="bg-indigo-600 text-white w-fit px-4 py-1 rounded-full font-black text-[10px] uppercase tracking-widest shadow-lg">Metropolis Guide</div>
+          <h3 className="text-3xl md:text-5xl font-black italic leading-tight uppercase tracking-tighter">Enter Mooderia, the city where your emotions shape the skyline.</h3>
+          <p className="text-base md:text-xl font-bold opacity-70 leading-relaxed max-w-2xl">
+            In this vibrant metropolis, your moods are tracked, your zodiac insights guide your path, and your loyal mood pet grows with your positivity. Stay synchronized, stay inspired.
+          </p>
         </div>
       </div>
 
-      <div className={`flex-1 min-h-[350px] p-6 md:p-8 rounded-[3rem] md:rounded-[4rem] ${isDarkMode ? 'bg-[#111111]' : 'bg-white'} shadow-2xl overflow-hidden border-4 border-black/5 flex flex-col`}>
-        <div className="flex justify-between items-center mb-6 px-2 shrink-0">
-          <h3 className="text-xl md:text-2xl font-black uppercase italic flex items-center gap-3"><TrendingUp className="text-custom" size={24} /> Sync History</h3>
-          <div className="bg-custom/10 px-4 py-1.5 rounded-full border-2 border-custom/20 hidden sm:block"><span className="text-custom font-black text-[10px] uppercase tracking-widest">Active Resonance</span></div>
-        </div>
-        <div className="flex-1 w-full min-h-0">
-          <ResponsiveContainer width="100%" height="100%" minHeight={200}>
-            <AreaChart data={chartData}>
-              <CartesianGrid strokeDasharray="6 6" vertical={false} stroke={isDarkMode ? "#222" : "#eee"} />
-              <XAxis dataKey="name" hide />
-              <YAxis domain={[0, 100]} hide />
-              <Tooltip contentStyle={{ backgroundColor: isDarkMode ? '#111' : '#fff', borderRadius: '16px', border: '2px solid rgba(0,0,0,0.05)', fontWeight: '900', fontSize: '11px' }} />
-              <Area type="monotone" dataKey="score" stroke="var(--theme-color)" fill="var(--theme-color)" fillOpacity={0.1} strokeWidth={6} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+      <div className={`p-10 rounded-[3rem] border-l-[16px] border-yellow-500 ${isDarkMode ? 'bg-[#1a1a1a]' : 'bg-white'} shadow-2xl relative group overflow-hidden`}>
+        <Sparkles className="absolute top-6 right-6 text-yellow-500 opacity-20 group-hover:opacity-100 transition-opacity" size={40} />
+        <p className="text-[10px] font-black opacity-30 uppercase tracking-[0.4em] mb-4">Wisdom of Mooderia</p>
+        <p className="italic font-bold text-2xl md:text-4xl leading-snug">"{dailyWisdom}"</p>
       </div>
       
-      <div className={`p-8 md:p-10 rounded-[3rem] border-l-[12px] border-[#ffa602] ${isDarkMode ? 'bg-[#111111]' : 'bg-white'} shadow-2xl relative overflow-hidden group shrink-0`}>
-        <h4 className="font-black text-xl mb-4 uppercase italic tracking-tighter opacity-30">Metropolis Insight</h4>
-        <p className="italic font-bold text-xl md:text-3xl leading-snug opacity-90 relative z-10">"{todayWisdom}"</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {[
+          { label: 'Mood Logs', val: user.moodHistory.length, color: 'text-green-500' },
+          { label: 'Tasks Slated', val: user.schedule.length, color: 'text-blue-500' },
+          { label: t('coins', language), val: user.moodCoins, color: 'text-yellow-500' }
+        ].map(stat => (
+          <div key={stat.label} className={`p-8 rounded-[3rem] ${isDarkMode ? 'bg-[#111]' : 'bg-white'} border-4 border-black/5 shadow-xl`}>
+             <p className={`text-4xl font-black italic ${stat.color}`}>{stat.val}</p>
+             <p className="text-[10px] font-black uppercase opacity-30 mt-2 tracking-widest">{stat.label}</p>
+          </div>
+        ))}
       </div>
     </div>
   );

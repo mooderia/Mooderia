@@ -1,23 +1,33 @@
-
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, MessageCircle, Repeat, Bell, CheckCircle2, Inbox, Clock, ShieldAlert, Sparkles, Trophy, UserPlus, Reply } from 'lucide-react';
+import { Heart, MessageCircle, Repeat, Bell, CheckCircle2, Inbox, Clock, ShieldAlert, Sparkles, Trophy, UserPlus, Reply, X, Check } from 'lucide-react';
 import { Notification } from '../types';
+import { respondToFriendRequest } from '../services/supabaseService';
 
 interface NotificationsSectionProps {
   notifications: Notification[];
   isDarkMode: boolean;
   onMarkRead: () => void;
+  currentUser: string; // Needed for handling requests
 }
 
-const NotificationsSection: React.FC<NotificationsSectionProps> = ({ notifications, isDarkMode, onMarkRead }) => {
+const NotificationsSection: React.FC<NotificationsSectionProps> = ({ notifications, isDarkMode, onMarkRead, currentUser }) => {
   useEffect(() => {
     onMarkRead();
   }, [onMarkRead]);
 
+  const handleFriendAction = async (fromUser: string | undefined, accept: boolean) => {
+    if (!fromUser) return;
+    await respondToFriendRequest(currentUser, fromUser, accept);
+    // Note: State update happens in App.tsx via polling, but for UX we can hide it immediately or show success.
+    // In this simplified version, we rely on the parent polling to clear the notification from the list eventually.
+  };
+
   const getIcon = (type: string) => {
     switch (type) {
       case 'heart': return <Heart className="text-red-500" size={28} fill="currentColor" />;
+      case 'friend_request': return <UserPlus className="text-orange-500" size={28} />;
+      case 'friend_accepted': return <CheckCircle2 className="text-green-500" size={28} />;
       case 'comment_heart': return <Heart className="text-pink-500" size={28} fill="currentColor" />;
       case 'comment': return <MessageCircle className="text-blue-500" size={28} fill="currentColor" />;
       case 'reply': return <Reply className="text-cyan-500" size={28} />;
@@ -30,11 +40,28 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = ({ notificatio
 
   const getMessageText = (notif: Notification) => {
     switch (notif.type) {
+      case 'friend_request': return (
+         <div>
+            <p className="text-base md:text-lg leading-tight font-bold mb-2">
+              <span className="font-black text-orange-500">@{notif.fromUser}</span> wants to link frequencies.
+            </p>
+            <div className="flex gap-2">
+                <button onClick={() => handleFriendAction(notif.fromUser, true)} className="px-4 py-2 bg-green-500 text-white rounded-xl font-black text-xs uppercase shadow-md flex items-center gap-1"><Check size={14}/> Accept</button>
+                <button onClick={() => handleFriendAction(notif.fromUser, false)} className="px-4 py-2 bg-red-500 text-white rounded-xl font-black text-xs uppercase shadow-md flex items-center gap-1"><X size={14}/> Deny</button>
+            </div>
+         </div>
+      );
+      case 'friend_accepted': return (
+        <p className="text-base md:text-lg leading-tight font-bold">
+          <span className="font-black text-green-500">@{notif.fromUser}</span> is now connected to your grid.
+        </p>
+      );
       case 'heart': return (
         <p className="text-base md:text-lg leading-tight font-bold">
           <span className="font-black text-[#e21b3c]">@{notif.fromUser}</span> liked your transmission
         </p>
       );
+      // ... (Rest of existing cases)
       case 'comment_heart': return (
         <p className="text-base md:text-lg leading-tight font-bold">
           <span className="font-black text-pink-500">@{notif.fromUser}</span> liked your frequency (comment)
@@ -71,6 +98,8 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = ({ notificatio
 
   const getColorTheme = (type: string) => {
     switch (type) {
+      case 'friend_request': return 'border-orange-500 bg-orange-500/5';
+      case 'friend_accepted': return 'border-green-500 bg-green-500/5';
       case 'heart': return 'border-[#e21b3c] bg-[#e21b3c]/5';
       case 'comment_heart': return 'border-pink-500 bg-pink-500/5';
       case 'comment': return 'border-blue-500 bg-blue-500/5';
@@ -125,7 +154,7 @@ const NotificationsSection: React.FC<NotificationsSectionProps> = ({ notificatio
                        <Clock size={14}/> {formatTime(notif.timestamp)}
                     </span>
                   </div>
-                  {notif.type !== 'follow' && notif.postContentSnippet && (
+                  {notif.type !== 'follow' && notif.type !== 'friend_request' && notif.postContentSnippet && (
                     <div className="p-5 bg-black/5 dark:bg-white/5 rounded-[1.5rem] italic text-sm font-medium opacity-80 border-l-4 border-black/10 truncate">
                       "{notif.postContentSnippet}"
                     </div>

@@ -1,240 +1,174 @@
-
 import React, { useState } from 'react';
-import { LogOut, Moon, Sun, Globe, ShieldCheck, DoorOpen, Download, Smartphone, Package, Monitor, Terminal, Info, ChevronRight, Github } from 'lucide-react';
+import { Moon, Sun, Globe, LogOut, ChevronRight, Copy, QrCode, Shield, Check } from 'lucide-react';
+import { generateTransferCode } from '../services/supabaseService'; 
 import { User } from '../types';
-import { motion, AnimatePresence } from 'framer-motion';
+import { COUNTRIES } from '../constants';
 
 interface SettingsSectionProps {
   isDarkMode: boolean;
   onToggleDarkMode: () => void;
+  language: 'English' | 'Filipino';
+  onToggleLanguage: () => void;
   onLogout: () => void;
   user: User;
-  onUnblock: (username: string) => void;
 }
 
-const SettingsSection: React.FC<SettingsSectionProps> = ({ 
-  isDarkMode, 
-  onToggleDarkMode, 
-  onLogout, 
-  user
-}) => {
-  const [showBuildGuide, setShowBuildGuide] = useState<'APK' | 'EXE' | null>(null);
-  const isGuest = user.email === 'guest@mooderia.local';
+const SettingsSection: React.FC<SettingsSectionProps> = ({ isDarkMode, onToggleDarkMode, language, onToggleLanguage, onLogout, user }) => {
+  const [showFullData, setShowFullData] = useState(false);
+  const [transferCode, setTransferCode] = useState('');
+  const [copied, setCopied] = useState(false);
 
-  const handleDownload = (platform: 'APK' | 'EXE') => {
-    // DEVELOPER NOTE: Once you build your APK or EXE, 
-    // place the file in the project root and update these links.
-    // Example: APK: '/mooderia-v1.apk'
-    const links = {
-      APK: '#', 
-      EXE: '#'  
-    };
-
-    if (links[platform] === '#') {
-      setShowBuildGuide(platform);
-    } else {
-      window.open(links[platform], '_blank');
-    }
+  const handleRevealData = () => {
+    if (!user) return;
+    const code = generateTransferCode(user);
+    setTransferCode(code);
+    setShowFullData(true);
   };
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  
+  const flagUrl = `https://flagcdn.com/w320/${user.country || 'un'}.png`;
+
   return (
-    <div className="space-y-6 pb-20 h-full overflow-y-auto fading-scrollbar pr-2">
-      <div className="flex flex-col md:flex-row md:items-end justify-between mb-8">
-        <div>
-          <h2 className={`text-4xl font-black italic uppercase tracking-tighter ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>City Settings</h2>
-          <p className="text-[10px] font-black opacity-40 uppercase tracking-[0.4em] mt-1">Metropolis System Interface</p>
-        </div>
-        <div className="flex items-center gap-2 mt-4 md:mt-0">
-          <div className={`w-2 h-2 ${isGuest ? 'bg-yellow-500' : 'bg-green-500'} rounded-full animate-pulse`} />
-          <p className="text-[9px] font-black uppercase tracking-widest opacity-60">
-            {isGuest ? 'Guest Instance Active' : 'Global Cloud Active'}
-          </p>
-        </div>
+    <div className="space-y-8 pb-20">
+      <div>
+        <h2 className={`text-4xl font-black italic uppercase tracking-tighter ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Citizen Terminal</h2>
+        <p className="text-[10px] font-black opacity-40 uppercase tracking-[0.4em] mt-1">Identity & Configuration</p>
       </div>
 
-      <div className={`p-8 rounded-[3rem] ${isDarkMode ? 'bg-slate-900 border-white/5' : 'bg-white border-black/5'} border-4 space-y-8 shadow-2xl`}>
-        
-        {/* Dark Mode Toggle */}
-        <div className={`flex items-center justify-between p-6 ${isDarkMode ? 'bg-white/5' : 'bg-gray-50'} rounded-3xl border-2 border-black/5`}>
-          <div className="flex items-center gap-4 text-slate-900 dark:text-white">
-            <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl text-purple-600">
+      {/* PASSPORT CARD */}
+      <div className={`relative w-full max-w-xl mx-auto aspect-[1.58] rounded-[2rem] overflow-hidden shadow-2xl transition-transform hover:scale-[1.01] duration-500 border-4 ${isDarkMode ? 'border-white/10' : 'border-black/5'}`}>
+        {/* Holographic Background with FULL FLAG WATERMARK */}
+        <div className={`absolute inset-0 ${isDarkMode ? 'bg-slate-900' : 'bg-slate-100'}`}>
+           {/* THE FULL FLAG BACKGROUND */}
+           <div className="absolute inset-0 opacity-10 pointer-events-none grayscale-[20%]">
+               <img src={flagUrl} className="w-full h-full object-cover" alt="Country Flag" />
+           </div>
+           
+           <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_50%_50%,_rgba(70,23,143,1)_0%,_transparent_70%)]" />
+           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
+        </div>
+
+        {/* Passport Content */}
+        <div className="absolute inset-0 p-6 md:p-8 flex flex-col justify-between z-10">
+           {/* Header */}
+           <div className="flex justify-between items-start">
+              <div className="flex items-center gap-2">
+                 <Shield size={24} className="text-indigo-600" />
+                 <div>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-indigo-900 dark:text-indigo-300">Mooderia</h3>
+                    <p className="text-[8px] font-black uppercase opacity-50 tracking-[0.2em]">Official Metropolis Passport</p>
+                 </div>
+              </div>
+              <div className="w-12 h-12 rounded-full border-2 border-indigo-500 overflow-hidden bg-indigo-100">
+                 {user.profilePic ? <img src={user.profilePic} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center font-black">{user.displayName[0]}</div>}
+              </div>
+           </div>
+
+           {/* Main Data */}
+           <div className="flex gap-6 mt-4">
+              <div className="flex-1 space-y-4">
+                 <div>
+                    <p className="text-[8px] font-black uppercase opacity-40 tracking-widest mb-1">Citizen Name</p>
+                    <p className="text-xl md:text-2xl font-black italic uppercase leading-none truncate drop-shadow-sm">{user.displayName}</p>
+                 </div>
+                 <div className="flex gap-4">
+                    <div>
+                        <p className="text-[8px] font-black uppercase opacity-40 tracking-widest mb-1">Role</p>
+                        <p className="text-sm font-black uppercase leading-none text-indigo-600">{user.title}</p>
+                    </div>
+                    <div>
+                        <p className="text-[8px] font-black uppercase opacity-40 tracking-widest mb-1">Origin</p>
+                        <p className="text-sm font-black uppercase leading-none text-indigo-600">{COUNTRIES.find(c => c.code === user.country)?.name || 'Unknown'}</p>
+                    </div>
+                 </div>
+                 <div>
+                    <p className="text-[8px] font-black uppercase opacity-40 tracking-widest mb-1">Metropolis ID</p>
+                    <div className="flex items-center gap-2">
+                       <p className="text-3xl md:text-4xl font-mono font-black tracking-widest text-indigo-600">{user.citizenCode}</p>
+                       <button onClick={() => copyToClipboard(user.citizenCode)} className="opacity-50 hover:opacity-100"><Copy size={16}/></button>
+                    </div>
+                 </div>
+              </div>
+              <div className="hidden md:block w-24 h-24 bg-white/80 p-2 rounded-xl self-end shadow-lg backdrop-blur-sm">
+                 <QrCode className="w-full h-full opacity-80" />
+              </div>
+           </div>
+
+           {/* Footer */}
+           <div className="mt-auto pt-4 border-t border-black/5 dark:border-white/5 flex justify-between items-end">
+              <p className="text-[8px] font-mono opacity-40">MDR-882-991-X</p>
+              <button onClick={handleRevealData} className="text-[9px] font-black uppercase text-indigo-500 hover:underline">Export Full Data</button>
+           </div>
+        </div>
+      </div>
+      
+      {/* Full Data String Modal */}
+      {showFullData && (
+         <div className="p-6 rounded-[2rem] bg-indigo-600/5 border-2 border-indigo-600/10">
+             <div className="flex justify-between items-center mb-4">
+                 <h4 className="font-black italic uppercase text-indigo-600 text-xs">Full Data String (For New Device Login)</h4>
+                 <button onClick={() => setShowFullData(false)} className="text-[10px] font-black uppercase opacity-40">Hide</button>
+             </div>
+             <p className="text-[9px] opacity-60 mb-2">Copy this entire code and paste it into the "Recover Identity" section on a new device.</p>
+             <div className="p-3 bg-black/10 rounded-xl break-all text-[10px] font-mono h-24 overflow-y-auto select-all mb-2">
+                 {transferCode}
+             </div>
+             <button onClick={() => copyToClipboard(transferCode)} className={`w-full py-3 ${copied ? 'bg-green-500' : 'bg-indigo-600'} text-white rounded-xl font-black uppercase text-xs shadow-lg flex items-center justify-center gap-2`}>
+                 {copied ? <Check size={16}/> : <Copy size={16}/>} {copied ? 'Copied!' : 'Copy Code'}
+             </button>
+         </div>
+      )}
+
+      {/* Settings Grid */}
+      <div className={`p-8 rounded-[3rem] ${isDarkMode ? 'bg-[#111]' : 'bg-white'} border-4 border-black/5 shadow-2xl space-y-4`}>
+        <button 
+          onClick={onToggleDarkMode}
+          className={`w-full flex items-center justify-between p-6 rounded-3xl transition-all border-2 border-transparent ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-50 hover:bg-gray-100'}`}
+        >
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-2xl ${isDarkMode ? 'bg-indigo-600 text-white' : 'bg-white text-indigo-600 shadow-sm'}`}>
               {isDarkMode ? <Moon size={24}/> : <Sun size={24}/>}
             </div>
-            <div>
-              <p className="font-black italic uppercase text-sm">City Lighting</p>
-              <p className="text-[10px] opacity-40 font-black uppercase tracking-widest">Interface Luminosity</p>
+            <div className="text-left">
+               <p className="font-black italic uppercase text-sm">City Lighting</p>
+               <p className="text-[10px] font-black opacity-40 uppercase tracking-widest">{isDarkMode ? 'Dark Mode Active' : 'Light Mode Active'}</p>
             </div>
           </div>
-          <button 
-            onClick={onToggleDarkMode}
-            className={`w-14 h-8 rounded-full p-1 transition-all ${isDarkMode ? 'bg-green-500' : 'bg-gray-300'}`}
-          >
-            <div className={`w-6 h-6 bg-white rounded-full shadow-md transition-transform ${isDarkMode ? 'translate-x-6' : 'translate-x-0'}`}></div>
-          </button>
-        </div>
+          <ChevronRight size={20} className="opacity-20" />
+        </button>
 
-        {/* Metropolis Portability - Prominent Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 px-2">
-             <Smartphone className="text-custom" size={20} />
-             <h3 className="text-xl font-black uppercase italic tracking-tighter">Portability Hub</h3>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Android APK Card */}
-            <div className={`p-6 rounded-[2.5rem] border-4 ${isDarkMode ? 'bg-indigo-950/20 border-indigo-500/20' : 'bg-indigo-50/50 border-indigo-100'} shadow-inner group relative overflow-hidden`}>
-              <div className="flex items-center gap-3 mb-6 relative z-10">
-                <div className="p-3 bg-indigo-600 rounded-2xl text-white shadow-lg">
-                  <Smartphone size={24} />
-                </div>
-                <div>
-                  <h4 className="font-black italic uppercase text-lg leading-none tracking-tighter">Android Portal</h4>
-                  <p className="text-[8px] font-black uppercase opacity-40 tracking-widest mt-1">Official .APK Bundle</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => handleDownload('APK')}
-                className="w-full p-4 bg-white dark:bg-slate-800 rounded-2xl border-b-6 border-black/10 flex items-center justify-center gap-3 shadow-xl active:translate-y-1 active:border-b-2 transition-all"
-              >
-                <Download size={18} className="text-indigo-600" />
-                <span className="font-black uppercase text-[10px] italic text-indigo-600">Download APK</span>
-              </button>
-              <button onClick={() => setShowBuildGuide('APK')} className="w-full mt-3 text-[8px] font-black uppercase opacity-30 hover:opacity-100 transition-all flex items-center justify-center gap-1">
-                <Info size={10} /> How to build in GitHub Codespace
-              </button>
+        <button 
+          onClick={onToggleLanguage}
+          className={`w-full flex items-center justify-between p-6 rounded-3xl transition-all border-2 border-transparent ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-50 hover:bg-gray-100'}`}
+        >
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-2xl ${isDarkMode ? 'bg-green-600 text-white' : 'bg-white text-green-600 shadow-sm'}`}>
+              <Globe size={24}/>
             </div>
-
-            {/* Windows EXE Card */}
-            <div className={`p-6 rounded-[2.5rem] border-4 ${isDarkMode ? 'bg-blue-950/20 border-blue-500/20' : 'bg-blue-50/50 border-blue-100'} shadow-inner group relative overflow-hidden`}>
-              <div className="flex items-center gap-3 mb-6 relative z-10">
-                <div className="p-3 bg-blue-600 rounded-2xl text-white shadow-lg">
-                  <Monitor size={24} />
-                </div>
-                <div>
-                  <h4 className="font-black italic uppercase text-lg leading-none tracking-tighter">Windows Core</h4>
-                  <p className="text-[8px] font-black uppercase opacity-40 tracking-widest mt-1">Desktop .EXE Binary</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => handleDownload('EXE')}
-                className="w-full p-4 bg-white dark:bg-slate-800 rounded-2xl border-b-6 border-black/10 flex items-center justify-center gap-3 shadow-xl active:translate-y-1 active:border-b-2 transition-all"
-              >
-                <Package size={18} className="text-blue-600" />
-                <span className="font-black uppercase text-[10px] italic text-blue-600">Download EXE</span>
-              </button>
-              <button onClick={() => setShowBuildGuide('EXE')} className="w-full mt-3 text-[8px] font-black uppercase opacity-30 hover:opacity-100 transition-all flex items-center justify-center gap-1">
-                <Info size={10} /> How to build in GitHub Codespace
-              </button>
+            <div className="text-left">
+               <p className="font-black italic uppercase text-sm">Citizen Dialect</p>
+               <p className="text-[10px] font-black opacity-40 uppercase tracking-widest">Current: {language}</p>
             </div>
           </div>
-        </div>
+          <span className="font-black text-xs uppercase opacity-40">{language === 'English' ? 'EN' : 'PH'}</span>
+        </button>
 
-        {/* Global Identity Card */}
-        {!isGuest ? (
-          <div className="p-8 bg-blue-600/5 dark:bg-blue-600/10 rounded-[3rem] border-4 border-dashed border-blue-600/20">
-            <div className="flex items-center gap-3 mb-6 text-blue-600">
-              <Globe size={28} />
-              <div>
-                <h3 className="font-black italic uppercase text-xl leading-none">Worldwide Sync</h3>
-                <p className="text-[9px] font-black uppercase opacity-40 tracking-widest mt-1">Real-Time Identity Profile</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-4 p-4 bg-white dark:bg-slate-800 rounded-2xl border-2 border-black/5">
-              <ShieldCheck size={20} className="text-green-500 shrink-0 mt-1" />
-              <p className="text-[11px] font-bold opacity-60 uppercase tracking-tight leading-relaxed">
-                Your identity is anchored to the <span className="text-blue-600 font-black">MOODERIA CLOUD</span>. Progress syncs across APK, EXE, and Web.
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="p-8 bg-yellow-600/5 dark:bg-yellow-600/10 rounded-[3rem] border-4 border-dashed border-yellow-600/20">
-            <div className="flex items-center gap-3 mb-6 text-yellow-600">
-              <Terminal size={28} />
-              <div>
-                <h3 className="font-black italic uppercase text-xl leading-none">Local Mode</h3>
-                <p className="text-[9px] font-black uppercase opacity-40 tracking-widest mt-1">Guest Instance</p>
-              </div>
-            </div>
-            <p className="text-[11px] font-bold opacity-60 uppercase tracking-tight leading-relaxed">
-              Sign up to enable cross-platform sync between your phone and computer!
-            </p>
-          </div>
-        )}
-
-        <div className="pt-8 border-t border-black/5 space-y-4">
-          <button 
-            onClick={onLogout}
-            className={`w-full p-6 rounded-[2rem] ${isGuest ? 'bg-slate-700 hover:bg-slate-800 border-slate-900' : 'bg-[#e21b3c] hover:bg-[#b31530] border-red-900'} text-white font-black flex items-center justify-center gap-4 shadow-2xl transition-transform active:scale-95 uppercase text-lg italic tracking-tighter border-b-8`}
-          >
-            {isGuest ? <DoorOpen size={28} /> : <LogOut size={28} />}
-            {isGuest ? 'Exit Guest Mode' : 'Terminate Cloud Link'}
-          </button>
-        </div>
-
+        <button 
+          onClick={onLogout}
+          className="w-full flex items-center justify-center gap-3 p-6 bg-red-600/10 text-red-600 rounded-3xl font-black uppercase text-sm border-2 border-red-600/10 hover:bg-red-600 hover:text-white transition-all shadow-xl active:scale-95"
+        >
+          <LogOut size={20} />
+          <span>Terminate Session</span>
+        </button>
       </div>
 
-      {/* Build Guide Modal */}
-      <AnimatePresence>
-        {showBuildGuide && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-black/90 backdrop-blur-xl">
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }} 
-              animate={{ scale: 1, opacity: 1 }} 
-              className={`${isDarkMode ? 'bg-slate-900 border-white/10' : 'bg-white border-black/5'} w-full max-w-lg rounded-[3rem] p-8 border-4 shadow-2xl relative flex flex-col max-h-[85vh]`}
-            >
-               <button onClick={() => setShowBuildGuide(null)} className="absolute top-6 right-6 opacity-40 hover:opacity-100 transition-all text-custom"><Package size={32}/></button>
-               
-               <div className="mb-6">
-                 <h3 className="text-2xl font-black italic uppercase tracking-tighter leading-none flex items-center gap-2">
-                   {showBuildGuide === 'APK' ? <Smartphone size={24}/> : <Monitor size={24}/>} 
-                   Build Metropolis Binary
-                 </h3>
-                 <p className="text-[9px] font-black uppercase opacity-40 tracking-widest mt-2">GitHub Codespace Terminal Instructions</p>
-               </div>
-
-               <div className="space-y-6 overflow-y-auto fading-scrollbar pr-2">
-                 <div className="bg-black/10 dark:bg-white/5 p-4 rounded-2xl border-2 border-black/5 space-y-3">
-                   <div className="flex items-center gap-2 text-custom">
-                     <Github size={16} />
-                     <p className="text-[10px] font-black uppercase">Step 1: Install Dependencies</p>
-                   </div>
-                   <div className="bg-black dark:bg-slate-950 p-3 rounded-lg font-mono text-[10px] text-green-400 overflow-x-auto whitespace-nowrap">
-                     {showBuildGuide === 'APK' 
-                        ? 'npm install @capacitor/core @capacitor/cli @capacitor/android' 
-                        : 'npm install electron electron-builder --save-dev'}
-                   </div>
-                 </div>
-
-                 <div className="bg-black/10 dark:bg-white/5 p-4 rounded-2xl border-2 border-black/5 space-y-3">
-                   <div className="flex items-center gap-2 text-custom">
-                     <Terminal size={16} />
-                     <p className="text-[10px] font-black uppercase">Step 2: Generate Bundle</p>
-                   </div>
-                   <div className="bg-black dark:bg-slate-950 p-3 rounded-lg font-mono text-[10px] text-green-400 overflow-x-auto">
-                     {showBuildGuide === 'APK' 
-                        ? 'npx cap add android && npx cap copy' 
-                        : 'npx electron-builder --win'}
-                   </div>
-                 </div>
-
-                 <div className="p-4 bg-orange-500/10 border-2 border-orange-500/20 rounded-2xl flex items-start gap-3">
-                    <Info size={16} className="text-orange-500 mt-1 shrink-0" />
-                    <p className="text-[10px] font-bold opacity-70 leading-relaxed italic">
-                      Since I am an AI, I cannot deliver the binary file directly. You must run these commands in your <b>GitHub Codespace terminal</b> to create the file. Once finished, upload it to your repository and update the download link in <code>SettingsSection.tsx</code>!
-                    </p>
-                 </div>
-
-                 <button onClick={() => setShowBuildGuide(null)} className="kahoot-button-custom w-full py-4 rounded-2xl text-white font-black uppercase text-xs shadow-lg active:scale-95 transition-all">
-                   I UNDERSTAND
-                 </button>
-               </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      <div className="text-center opacity-20 font-black italic tracking-widest text-[10px] py-12">
-        METROPOLIS MULTI-PLATFORM v6.2.0
+      <div className="text-center opacity-20 font-black italic tracking-widest text-[10px] py-10">
+        MOODERIA METROPOLIS v8.2.0
       </div>
     </div>
   );

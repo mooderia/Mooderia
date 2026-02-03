@@ -1,7 +1,5 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 
-// Standard initialization as per instructions
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const getHoroscope = async (sign: string) => {
@@ -71,7 +69,6 @@ export const checkContentSafety = async (text: string) => {
   }
 };
 
-// Fix: Implement getPsychiatristResponse to handle chat sessions with Dr. Pinel
 export const getPsychiatristResponse = async (text: string) => {
   try {
     const response = await ai.models.generateContent({
