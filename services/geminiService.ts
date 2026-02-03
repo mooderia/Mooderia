@@ -1,9 +1,8 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 export const getHoroscope = async (sign: string) => {
   try {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `Provide a daily horoscope for ${sign} today.`,
@@ -20,6 +19,7 @@ export const getHoroscope = async (sign: string) => {
 
 export const getLovePrediction = async (sign1: string, sign2: string) => {
   try {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Predict love compatibility between ${sign1} and ${sign2}. Return only a JSON object with 'percentage' (0-100) and 'reason'.`,
@@ -46,6 +46,7 @@ export const getLovePrediction = async (sign1: string, sign2: string) => {
 
 export const checkContentSafety = async (text: string) => {
   try {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `Analyze the following text for inappropriate language, hate speech, severe insults, or harassment: "${text}". Return a JSON object with 'isInappropriate' (boolean) and 'reason' (string, keep it short).`,
@@ -71,6 +72,7 @@ export const checkContentSafety = async (text: string) => {
 
 export const getPsychiatristResponse = async (text: string) => {
   try {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: text,
