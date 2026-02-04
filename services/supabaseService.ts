@@ -12,7 +12,7 @@ const mapProfileToUser = (profile: any): User => ({
   citizenCode: profile.citizen_code,
   displayName: profile.display_name,
   username: profile.username,
-  email: profile.email || `${profile.username}@mooderia.local`,
+  email: profile.email || `${profile.username}@mooderia.com`,
   country: profile.country || 'un',
   profilePic: profile.profile_pic,
   profileColor: profile.profile_color,
@@ -104,7 +104,7 @@ export const loginUser = async (citizenCodeAttempt: string, passwordAttempt: str
 
   // 2. Log in using the mapped email
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-    email: `${profile.username}@mooderia.local`,
+    email: `${profile.username}@mooderia.com`,
     password: passwordAttempt,
   });
 
@@ -126,12 +126,15 @@ export const registerUser = async (user: User, password: string): Promise<{ succ
 
   // 2. Sign up in Supabase Auth
   const { data: authData, error: authError } = await supabase.auth.signUp({
-    email: `${user.username}@mooderia.local`,
+    email: `${user.username}@mooderia.com`,
     password: password,
   });
 
-  if (authError) return { success: false, error: authError.message };
-  if (!authData.user) return { success: false, error: "Auth failed." };
+  if (authError) {
+    if (authError.message.includes('already registered')) return { success: false, error: "Username already taken in the Grid." };
+    return { success: false, error: authError.message };
+  }
+  if (!authData.user) return { success: false, error: "Authorization sequence failed." };
 
   // 3. Create profile in DB
   const profileData = {
@@ -159,7 +162,6 @@ export const syncProfile = async (user: User) => {
 // --- PASSPORT SYSTEM ---
 
 export const generateTransferCode = (user: User): string => {
-  // Transfer code is still a portable Base64 of the user object for convenience
   const json = JSON.stringify(user);
   return btoa(unescape(encodeURIComponent(json)));
 };
@@ -168,8 +170,6 @@ export const importTransferCode = async (code: string): Promise<{ success: boole
   try {
     const json = decodeURIComponent(escape(atob(code)));
     const importedUser = JSON.parse(json) as User;
-    // For cloud, we don't just "import" - we'd need to link or log in. 
-    // In this app context, recovery usually implies the user already has an account.
     return { success: false, error: "Please use your ID and Phrase to log in on this device." };
   } catch (e) {
     return { success: false, error: "Invalid Transfer Code." };
@@ -179,7 +179,6 @@ export const importTransferCode = async (code: string): Promise<{ success: boole
 // --- FRIEND SYSTEM ---
 
 export const sendFriendRequest = async (fromUsername: string, toCitizenCode: string): Promise<{ success: boolean; error?: string }> => {
-  // Look up target
   const { data: targetProfile, error } = await supabase
     .from('profiles')
     .select('username, friend_requests')
@@ -201,7 +200,6 @@ export const sendFriendRequest = async (fromUsername: string, toCitizenCode: str
 };
 
 export const respondToFriendRequest = async (username: string, fromUsername: string, accept: boolean): Promise<{ success: boolean }> => {
-  // Fetch both profiles
   const { data: myProfile } = await supabase.from('profiles').select('*').eq('username', username).single();
   const { data: otherProfile } = await supabase.from('profiles').select('*').eq('username', fromUsername).single();
 
@@ -212,8 +210,8 @@ export const respondToFriendRequest = async (username: string, fromUsername: str
   const otherUpdates: any = {};
 
   if (accept) {
-    myUpdates.friends = [...(myProfile.friends || []), fromUsername];
-    otherUpdates.friends = [...(otherProfile.friends || []), username];
+    myUpdates.friends = Array.from(new Set([...(myProfile.friends || []), fromUsername]));
+    otherUpdates.friends = Array.from(new Set([...(otherProfile.friends || []), username]));
     
     await supabase.from('profiles').update(otherUpdates).eq('username', fromUsername);
     await sendMessageCloud('System', fromUsername, `@${username} accepted your citizen link request!`);

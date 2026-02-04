@@ -70,10 +70,13 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       } else if (mode === 'signup') {
         if (!username || !password || !firstName || !lastName) { setError("All fields required."); setIsLoading(false); return; }
         
+        const cleanUsername = username.toLowerCase().trim().replace(/[^a-z0-9_]/g, '');
+        if (cleanUsername.length < 3) { setError("Username too short or invalid."); setIsLoading(false); return; }
+
         const newUser: User = {
           displayName: `${firstName} ${lastName}`.trim(),
-          username: username,
-          email: `${username}@mooderia.local`,
+          username: cleanUsername,
+          email: `${cleanUsername}@mooderia.com`,
           citizenCode: '', 
           country: selectedCountry,
           moodHistory: [],
