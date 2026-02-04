@@ -14,7 +14,7 @@ import AuthScreen from './sections/AuthScreen';
 import LoadingScreen from './components/LoadingScreen';
 import MoodCheckIn from './components/MoodCheckIn';
 import { MOOD_SCORES, getExpNeeded, t } from './constants';
-import { syncProfile, fetchUserMessages, sendMessageCloud, getCurrentSessionUser, clearSession } from './services/supabaseService';
+import { syncProfile, fetchUserMessages, sendMessageCloud, getCurrentSessionUser, clearSession, supabase } from './services/supabaseService';
 import { Coins, Sparkles, Trophy, Send, Calendar, Clock, Book, Rocket, Cog } from 'lucide-react';
 
 type AnimationType = 'express' | 'schedule' | 'routine' | 'diary' | 'alarm' | null;
@@ -41,19 +41,23 @@ const App: React.FC = () => {
       const savedLang = localStorage.getItem('mooderia_lang');
       if (savedLang === 'Filipino') setLanguage('Filipino');
       
-      // 2. Session Check (Prevents logout on refresh)
-      const sessionUser = getCurrentSessionUser();
-      if (sessionUser) {
-          setCurrentUser(sessionUser);
+      // 2. Cloud Session Check
+      try {
+        const sessionUser = await getCurrentSessionUser();
+        if (sessionUser) {
+            setCurrentUser(sessionUser);
+        }
+      } catch (e) {
+        console.error("Session fetch failed", e);
       }
 
       setIsLoaded(true);
-      // Brief delay for splash screen aesthetics
       setTimeout(() => setIsAppStarting(false), 2000);
     };
     init();
   }, []);
 
+  // Update profile in cloud whenever local state changes significantly
   useEffect(() => {
     if (currentUser) {
       syncProfile(currentUser);
@@ -65,7 +69,6 @@ const App: React.FC = () => {
     const handleAiResponse = async (e: any) => {
       const aiMessage: Message = e.detail;
       await sendMessageCloud(aiMessage.sender, aiMessage.recipient, aiMessage.text);
-      // Refresh local messages cache immediately for UI responsiveness
       if (currentUser) {
         const freshMsgs = await fetchUserMessages(currentUser.username);
         setMessages(freshMsgs);
@@ -75,6 +78,7 @@ const App: React.FC = () => {
     return () => window.removeEventListener('ai-response', handleAiResponse);
   }, [currentUser?.username]);
 
+  // Real-time Polling for Cloud Data
   useEffect(() => {
     if (!currentUser) return;
 
@@ -91,48 +95,48 @@ const App: React.FC = () => {
         read: m.read || false 
       }));
 
-      const freshUserDataStr = localStorage.getItem('mooderia_users_v2_stable');
-      if(freshUserDataStr) {
-         const db = JSON.parse(freshUserDataStr);
-         const myFreshData = db[currentUser.username] as User;
-         
-         if (myFreshData) {
-            if (JSON.stringify(myFreshData.friends) !== JSON.stringify(currentUser.friends) || 
-                JSON.stringify(myFreshData.friendRequests) !== JSON.stringify(currentUser.friendRequests)) {
-                  setCurrentUser(prev => prev ? ({ ...prev, friends: myFreshData.friends, friendRequests: myFreshData.friendRequests }) : null);
+      // Fetch fresh profile data to sync friends/requests
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('friends, friend_requests')
+        .eq('username', currentUser.username)
+        .single();
+
+      if (profile) {
+        if (JSON.stringify(profile.friends) !== JSON.stringify(currentUser.friends) || 
+            JSON.stringify(profile.friend_requests) !== JSON.stringify(currentUser.friendRequests)) {
+              setCurrentUser(prev => prev ? ({ ...prev, friends: profile.friends, friendRequests: profile.friend_requests }) : null);
+        }
+
+        const reqNotifs: Notification[] = (profile.friend_requests || []).map((reqUser: string) => ({
+           id: `req-${reqUser}`,
+           type: 'friend_request',
+           title: 'Friend Request',
+           text: `@${reqUser} wants to link frequencies.`,
+           timestamp: Date.now(),
+           fromUser: reqUser,
+           read: false
+        }));
+
+        setNotifications(prev => {
+            const existingIds = new Set(prev.map(n => n.id));
+            const allFreshNotifs = [...mailNotifications, ...reqNotifs];
+            const newItems = allFreshNotifs.filter(n => !existingIds.has(n.id));
+
+            if (newItems.length > 0) {
+              const unreadNewMails = newItems.filter(n => n.type === 'mail' && !n.read);
+              const unreadNewReqs = newItems.filter(n => n.type === 'friend_request' && !n.read);
+              if (unreadNewMails.length > 0) showToast("New Mail", "Incoming transmission.");
+              if (unreadNewReqs.length > 0) showToast("Alert", "New Citizen Link Request.");
             }
-
-            const reqNotifs: Notification[] = (myFreshData.friendRequests || []).map(reqUser => ({
-               id: `req-${reqUser}`,
-               type: 'friend_request',
-               title: 'Friend Request',
-               text: `@${reqUser} wants to link frequencies.`,
-               timestamp: Date.now(),
-               fromUser: reqUser,
-               read: false
-            }));
-
-            setNotifications(prev => {
-                const existingIds = new Set(prev.map(n => n.id));
-                const allFreshNotifs = [...mailNotifications, ...reqNotifs];
-                const newItems = allFreshNotifs.filter(n => !existingIds.has(n.id));
-
-                if (newItems.length > 0) {
-                  const unreadNewMails = newItems.filter(n => n.type === 'mail' && !n.read);
-                  const unreadNewReqs = newItems.filter(n => n.type === 'friend_request' && !n.read);
-
-                  if (unreadNewMails.length > 0) showToast("New Mail", "Incoming transmission.");
-                  if (unreadNewReqs.length > 0) showToast("Alert", "New Citizen Link Request.");
-                }
-                
-                return allFreshNotifs;
-            });
-         }
+            
+            return allFreshNotifs;
+        });
       }
     };
 
     pollData();
-    const interval = setInterval(pollData, 3000);
+    const interval = setInterval(pollData, 5000);
     return () => clearInterval(interval);
   }, [currentUser?.username]);
 
@@ -207,8 +211,8 @@ const App: React.FC = () => {
     setCurrentUser(prev => prev ? { ...prev, ...updates } : null);
   };
 
-  const handleLogout = () => {
-    clearSession(); 
+  const handleLogout = async () => {
+    await clearSession(); 
     setCurrentUser(null);
     setIsAppStarting(true);
     setTimeout(() => setIsAppStarting(false), 1000);
@@ -221,7 +225,6 @@ const App: React.FC = () => {
       if (recipient !== 'DrPinel') {
         showToast("Sent!", `Express mail delivered to @${recipient}`);
       }
-      // Update local state immediately
       const freshMsgs = await fetchUserMessages(currentUser.username);
       setMessages(freshMsgs);
     }
@@ -229,9 +232,7 @@ const App: React.FC = () => {
 
   const renderCentralAnimation = () => {
     if (!centralAnimation) return null;
-
     const { type, text } = centralAnimation;
-    
     let Icon = Sparkles;
     let color = "text-indigo-600";
     let animationProps = {};
@@ -322,19 +323,12 @@ const App: React.FC = () => {
               <main className="flex-1 h-full overflow-y-auto relative p-4 md:p-8 no-scrollbar">
                 <AnimatePresence mode="wait">
                   {activeSection === 'Home' && <motion.div key="home" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}}><HomeSection user={currentUser} isDarkMode={isDarkMode} language={language} /></motion.div>}
-                  
                   {activeSection === 'Mood' && <motion.div key="mood" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="h-full"><MoodSection user={currentUser} onUpdate={handleUpdateUser} isDarkMode={isDarkMode} language={language} onReward={() => handleGainReward(1, 10)} triggerAnimation={triggerAnimation} /></motion.div>}
-
                   {activeSection === 'Zodiac' && <motion.div key="zodiac" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="h-full"><ZodiacSection isDarkMode={isDarkMode} /></motion.div>}
-
                   {activeSection === 'Psychiatrist' && <motion.div key="psychiatrist" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="h-full"><PsychiatristSection currentUser={currentUser} isDarkMode={isDarkMode} messages={messages} onSendMessage={(text) => handleSendMail('DrPinel', text)} /></motion.div>}
-                  
                   {activeSection === 'CityHall' && <motion.div key="cityhall" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="h-full"><CityHallSection user={currentUser} onUpdate={handleUpdateUser} isDarkMode={isDarkMode} language={language} onReward={() => handleGainReward(2, 20)} triggerAnimation={triggerAnimation} onSendMail={handleSendMail} /></motion.div>}
-                  
                   {activeSection === 'Mails' && <motion.div key="mails" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}}><MailSection notifications={notifications} setNotifications={setNotifications} isDarkMode={isDarkMode} currentUser={currentUser} /></motion.div>}
-                  
                   {activeSection === 'Profile' && <motion.div key="profile" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}}><ProfileSection user={currentUser} onUpdate={handleUpdateUser} isDarkMode={isDarkMode} /></motion.div>}
-                  
                   {activeSection === 'Settings' && <motion.div key="settings" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}}>
                     <SettingsSection 
                       isDarkMode={isDarkMode} 
@@ -353,11 +347,9 @@ const App: React.FC = () => {
                   <MoodCheckIn onSubmit={handleMoodSubmit} isDarkMode={isDarkMode} />
                 )}
               </AnimatePresence>
-              
               <AnimatePresence>
                 {renderCentralAnimation()}
               </AnimatePresence>
-
               <AnimatePresence>
                 {activeToast && (
                   <motion.div initial={{ opacity: 0, y: 50, scale: 0.8 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="fixed bottom-24 md:bottom-10 right-4 md:right-10 z-[100] bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-2xl border-2 border-black/5 flex items-center gap-4 max-w-sm">

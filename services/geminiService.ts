@@ -7,7 +7,7 @@ export const getHoroscope = async (sign: string) => {
       model: 'gemini-3-flash-preview',
       contents: `Provide a daily horoscope for ${sign} today.`,
       config: {
-        systemInstruction: "You are a mystical Metropolis Astrologer. Provide a 3-sentence daily horoscope that is encouraging and insightful. Use cosmic and modern terminology.",
+        systemInstruction: "You are a mystical Metropolis Astrologer in the Mooderia universe. Provide a 3-sentence daily horoscope that is encouraging and insightful. Use cosmic and modern metropolis terminology.",
       }
     });
     return response.text || "The constellations are currently obscured by metropolis smog.";
@@ -49,7 +49,7 @@ export const checkContentSafety = async (text: string) => {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: `Analyze the following text for inappropriate language, hate speech, severe insults, or harassment: "${text}". Return a JSON object with 'isInappropriate' (boolean) and 'reason' (string, keep it short).`,
+      contents: `Analyze the following text for inappropriate language: "${text}". Return a JSON object with 'isInappropriate' (boolean) and 'reason' (string).`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -77,7 +77,7 @@ export const getPsychiatristResponse = async (text: string) => {
       model: 'gemini-3-pro-preview',
       contents: text,
       config: {
-        systemInstruction: "You are Dr. Philippe Pinel, a wise and empathetic psychiatrist in the Mooderia Metropolis. Your goal is to provide supportive, non-judgmental, and insightful guidance to citizens. Use a professional yet caring tone. If a user expresses severe distress, gently remind them to seek professional real-world help while remaining supportive.",
+        systemInstruction: "You are Dr. Philippe Pinel, a wise and empathetic psychiatrist in the Mooderia Metropolis. Your goal is to provide supportive, non-judgmental, and insightful guidance. Keep responses relatively concise but warm. Encourage citizens to reflect on their mood pet and their daily streaks.",
       }
     });
     return { text: response.text || "I am processing your words. Tell me more about how you feel." };

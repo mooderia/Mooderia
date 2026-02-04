@@ -1,205 +1,265 @@
+import { createClient } from '@supabase/supabase-js';
 import { User, Message } from '../types';
 
-// --- SERVERLESS STORAGE MANAGER ---
-export const isCloudEnabled = false;
+const SUPABASE_URL = 'https://hlzvwlaxocjakqkjughb.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsenZ3bGF4b2NqYWtxa2p1Z2hiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxNTEwMDEsImV4cCI6MjA4NTcyNzAwMX0.SU4XUQIV_Xo3eVOfMi2afPCIy5u6LvKUspADtS8c8EQ';
 
-// CRITICAL: This key handles the data persistence. 
-const STORAGE_KEY = 'mooderia_users_v2_stable';
-const MAIL_KEY = 'mooderia_mails_v2_stable';
-const SESSION_KEY = 'mooderia_active_session'; // NEW: Track active login
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const getLocalUsers = (): Record<string, User> => {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : {};
-  } catch (e) {
-    console.error("Local database error", e);
-    return {};
-  }
-};
+// Helper to map Supabase profile to our User type
+const mapProfileToUser = (profile: any): User => ({
+  id: profile.id,
+  citizenCode: profile.citizen_code,
+  displayName: profile.display_name,
+  username: profile.username,
+  email: profile.email || `${profile.username}@mooderia.local`,
+  country: profile.country || 'un',
+  profilePic: profile.profile_pic,
+  profileColor: profile.profile_color,
+  title: profile.title || 'Citizen',
+  bio: profile.bio,
+  moodHistory: profile.mood_history || [],
+  diaryEntries: profile.diary_entries || [],
+  schedule: profile.schedule || [],
+  routines: profile.routines || [],
+  moodStreak: profile.mood_streak || 0,
+  lastMoodDate: profile.last_mood_date,
+  moodCoins: profile.mood_coins || 0,
+  petName: profile.pet_name || 'Guardian',
+  petEmoji: profile.pet_emoji || '🐱',
+  petLevel: profile.pet_level || 1,
+  petExp: profile.pet_exp || 0,
+  petHasBeenChosen: profile.pet_has_been_chosen || false,
+  petBackground: profile.pet_background || 'default',
+  unlockedBackgrounds: profile.unlocked_backgrounds || ['default'],
+  friends: profile.friends || [],
+  friendRequests: profile.friend_requests || [],
+  following: profile.following || [],
+  followers: profile.followers || [],
+  likesReceived: profile.likes_received || 0,
+});
 
-const saveLocalUsers = (users: Record<string, User>) => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
-  } catch (e) {
-    console.error("Failed to save to local storage (quota might be full)", e);
-  }
-};
+// Helper to map User type back to Supabase profile
+const mapUserToProfile = (user: User) => ({
+  display_name: user.displayName,
+  username: user.username,
+  citizen_code: user.citizenCode,
+  country: user.country,
+  profile_pic: user.profilePic,
+  profile_color: user.profileColor,
+  title: user.title,
+  bio: user.bio,
+  mood_history: user.moodHistory,
+  diary_entries: user.diaryEntries,
+  schedule: user.schedule,
+  routines: user.routines,
+  mood_streak: user.moodStreak,
+  last_mood_date: user.lastMoodDate,
+  mood_coins: user.moodCoins,
+  pet_name: user.petName,
+  pet_emoji: user.petEmoji,
+  pet_level: user.petLevel,
+  pet_exp: user.petExp,
+  pet_has_been_chosen: user.petHasBeenChosen,
+  pet_background: user.petBackground,
+  unlocked_backgrounds: user.unlockedBackgrounds,
+  friends: user.friends,
+  friend_requests: user.friendRequests,
+  following: user.following,
+  followers: user.followers,
+  likes_received: user.likesReceived,
+});
 
 // --- SESSION MANAGEMENT ---
 
-export const getCurrentSessionUser = (): User | null => {
-    const activeUsername = localStorage.getItem(SESSION_KEY);
-    if (!activeUsername) return null;
-    const users = getLocalUsers();
-    return users[activeUsername] || null;
+export const getCurrentSessionUser = async (): Promise<User | null> => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return null;
+
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', session.user.id)
+    .single();
+
+  if (error || !profile) return null;
+  return mapProfileToUser(profile);
 };
 
-export const clearSession = () => {
-    localStorage.removeItem(SESSION_KEY);
-};
-
-export const saveSession = (username: string) => {
-    localStorage.setItem(SESSION_KEY, username);
-};
-
-// Generate a random 6-digit code
-const generateCitizenCode = (): string => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+export const clearSession = async () => {
+  await supabase.auth.signOut();
 };
 
 // --- AUTHENTICATION ---
 
 export const loginUser = async (citizenCodeAttempt: string, passwordAttempt: string): Promise<{ success: boolean; user?: User; error?: string }> => {
-  await new Promise(r => setTimeout(r, 500)); // Simulate network
-  const users = getLocalUsers();
-  
-  // Find user by code
-  const user = Object.values(users).find(u => u.citizenCode === citizenCodeAttempt);
+  // 1. Find the username associated with this citizen code
+  const { data: profile, error: fetchError } = await supabase
+    .from('profiles')
+    .select('username, id')
+    .eq('citizen_code', citizenCodeAttempt)
+    .single();
 
-  if (!user) return { success: false, error: "Metropolis ID not found." };
+  if (fetchError || !profile) return { success: false, error: "Metropolis ID not found." };
 
-  // @ts-ignore
-  if (user.password !== passwordAttempt) return { success: false, error: "Incorrect Access Phrase." };
+  // 2. Log in using the mapped email
+  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+    email: `${profile.username}@mooderia.local`,
+    password: passwordAttempt,
+  });
 
-  // Save Session
-  saveSession(user.username);
+  if (authError) return { success: false, error: "Incorrect Access Phrase or system error." };
 
-  return { success: true, user };
+  // 3. Fetch full profile
+  const { data: fullProfile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', authData.user.id)
+    .single();
+
+  return { success: true, user: mapProfileToUser(fullProfile) };
 };
 
 export const registerUser = async (user: User, password: string): Promise<{ success: boolean; error?: string; citizenCode?: string }> => {
-  await new Promise(r => setTimeout(r, 800)); // Simulate network
-  const users = getLocalUsers();
-  
-  if (users[user.username]) return { success: false, error: "Username taken." };
+  // 1. Generate Citizen Code (Unique 6-digit)
+  const citizenCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-  // Generate unique 6-digit code
-  let code = generateCitizenCode();
-  // Ensure uniqueness
-  while (Object.values(users).some(u => u.citizenCode === code)) {
-    code = generateCitizenCode();
-  }
+  // 2. Sign up in Supabase Auth
+  const { data: authData, error: authError } = await supabase.auth.signUp({
+    email: `${user.username}@mooderia.local`,
+    password: password,
+  });
 
-  // @ts-ignore
-  const newUser = { ...user, citizenCode: code, password, id: crypto.randomUUID() };
-  
-  users[user.username] = newUser;
-  saveLocalUsers(users);
+  if (authError) return { success: false, error: authError.message };
+  if (!authData.user) return { success: false, error: "Auth failed." };
 
-  return { success: true, citizenCode: code };
+  // 3. Create profile in DB
+  const profileData = {
+    id: authData.user.id,
+    ...mapUserToProfile({ ...user, citizenCode }),
+  };
+
+  const { error: dbError } = await supabase
+    .from('profiles')
+    .insert([profileData]);
+
+  if (dbError) return { success: false, error: dbError.message };
+
+  return { success: true, citizenCode };
 };
 
 export const syncProfile = async (user: User) => {
-  const users = getLocalUsers();
-  const existing = users[user.username] || {};
-  // Preserve the password which is not in the User type passed around
-  // @ts-ignore
-  const password = existing.password || user.password; 
-  // @ts-ignore
-  users[user.username] = { ...user, password };
-  saveLocalUsers(users);
+  if (!user.id) return;
+  await supabase
+    .from('profiles')
+    .update(mapUserToProfile(user))
+    .eq('id', user.id);
 };
 
 // --- PASSPORT SYSTEM ---
 
 export const generateTransferCode = (user: User): string => {
-    const users = getLocalUsers();
-    const fullUserData = users[user.username];
-    if(!fullUserData) return '';
-    const json = JSON.stringify(fullUserData);
-    return btoa(unescape(encodeURIComponent(json)));
+  // Transfer code is still a portable Base64 of the user object for convenience
+  const json = JSON.stringify(user);
+  return btoa(unescape(encodeURIComponent(json)));
 };
 
-export const importTransferCode = (code: string): { success: boolean; user?: User; error?: string } => {
-    try {
-        const json = decodeURIComponent(escape(atob(code)));
-        const importedUser = JSON.parse(json) as User;
-        if (!importedUser.username) throw new Error("Invalid ID");
-
-        const users = getLocalUsers();
-        users[importedUser.username] = importedUser;
-        saveLocalUsers(users);
-
-        // Save Session
-        saveSession(importedUser.username);
-
-        return { success: true, user: importedUser };
-    } catch (e) {
-        return { success: false, error: "Invalid Transfer Code." };
-    }
+export const importTransferCode = async (code: string): Promise<{ success: boolean; user?: User; error?: string }> => {
+  try {
+    const json = decodeURIComponent(escape(atob(code)));
+    const importedUser = JSON.parse(json) as User;
+    // For cloud, we don't just "import" - we'd need to link or log in. 
+    // In this app context, recovery usually implies the user already has an account.
+    return { success: false, error: "Please use your ID and Phrase to log in on this device." };
+  } catch (e) {
+    return { success: false, error: "Invalid Transfer Code." };
+  }
 };
 
 // --- FRIEND SYSTEM ---
 
 export const sendFriendRequest = async (fromUsername: string, toCitizenCode: string): Promise<{ success: boolean; error?: string }> => {
-    const users = getLocalUsers();
-    
-    const targetUser = Object.values(users).find(u => u.citizenCode === toCitizenCode);
-    
-    if (!targetUser) return { success: false, error: "Citizen Code not found." };
-    if (targetUser.username === fromUsername) return { success: false, error: "Cannot add yourself." };
-    if (targetUser.friends?.includes(fromUsername)) return { success: false, error: "Already citizens." };
-    if (targetUser.friendRequests?.includes(fromUsername)) return { success: false, error: "Request already sent." };
+  // Look up target
+  const { data: targetProfile, error } = await supabase
+    .from('profiles')
+    .select('username, friend_requests')
+    .eq('citizen_code', toCitizenCode)
+    .single();
 
-    targetUser.friendRequests = [...(targetUser.friendRequests || []), fromUsername];
-    users[targetUser.username] = targetUser;
-    saveLocalUsers(users);
-    
-    return { success: true };
+  if (error || !targetProfile) return { success: false, error: "Citizen not found." };
+  
+  const currentRequests = targetProfile.friend_requests || [];
+  if (currentRequests.includes(fromUsername)) return { success: false, error: "Request already pending." };
+
+  const { error: updateError } = await supabase
+    .from('profiles')
+    .update({ friend_requests: [...currentRequests, fromUsername] })
+    .eq('username', targetProfile.username);
+
+  if (updateError) return { success: false, error: "Failed to transmit." };
+  return { success: true };
 };
 
 export const respondToFriendRequest = async (username: string, fromUsername: string, accept: boolean): Promise<{ success: boolean }> => {
-    const users = getLocalUsers();
-    const user = users[username];
-    const sender = users[fromUsername];
+  // Fetch both profiles
+  const { data: myProfile } = await supabase.from('profiles').select('*').eq('username', username).single();
+  const { data: otherProfile } = await supabase.from('profiles').select('*').eq('username', fromUsername).single();
 
-    if (!user || !sender) return { success: false };
+  if (!myProfile || !otherProfile) return { success: false };
 
-    user.friendRequests = user.friendRequests.filter(r => r !== fromUsername);
+  const newMyRequests = (myProfile.friend_requests || []).filter((r: string) => r !== fromUsername);
+  const myUpdates: any = { friend_requests: newMyRequests };
+  const otherUpdates: any = {};
 
-    if (accept) {
-        user.friends = [...(user.friends || []), fromUsername];
-        sender.friends = [...(sender.friends || []), username];
-        users[fromUsername] = sender;
-        
-        // Notify the sender that they were accepted
-        await sendMessageCloud('System', fromUsername, `@${username} accepted your citizen link request! You are now friends.`);
-    } else {
-        // Notify the sender that they were declined
-        await sendMessageCloud('System', fromUsername, `@${username} declined your citizen link request.`);
-    }
+  if (accept) {
+    myUpdates.friends = [...(myProfile.friends || []), fromUsername];
+    otherUpdates.friends = [...(otherProfile.friends || []), username];
+    
+    await supabase.from('profiles').update(otherUpdates).eq('username', fromUsername);
+    await sendMessageCloud('System', fromUsername, `@${username} accepted your citizen link request!`);
+  }
 
-    users[username] = user;
-    saveLocalUsers(users);
-    return { success: true };
+  await supabase.from('profiles').update(myUpdates).eq('username', username);
+  return { success: true };
 };
 
 // --- MESSAGING ---
 
 export const fetchUserMessages = async (username: string): Promise<Message[]> => {
-  const allMails = JSON.parse(localStorage.getItem(MAIL_KEY) || '[]');
-  return allMails.filter((m: any) => m.recipient === username);
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .eq('recipient', username)
+    .order('timestamp', { ascending: false });
+
+  if (error) return [];
+  return data.map(m => ({
+    id: m.id,
+    sender: m.sender,
+    recipient: m.recipient,
+    text: m.text,
+    timestamp: new Date(m.timestamp).getTime(),
+    read: m.read
+  }));
 };
 
 export const markMessagesAsRead = async (username: string) => {
-  const allMails = JSON.parse(localStorage.getItem(MAIL_KEY) || '[]');
-  const updatedMails = allMails.map((m: any) => 
-    m.recipient === username ? { ...m, read: true } : m
-  );
-  localStorage.setItem(MAIL_KEY, JSON.stringify(updatedMails));
+  await supabase
+    .from('messages')
+    .update({ read: true })
+    .eq('recipient', username);
 };
 
 export const sendMessageCloud = async (sender: string, recipient: string, text: string) => {
-  const allMails = JSON.parse(localStorage.getItem(MAIL_KEY) || '[]');
-  const newMail = {
-    id: Math.random().toString(36).substr(2, 9),
-    sender,
-    recipient,
-    text,
-    timestamp: Date.now(),
-    read: false
-  };
-  localStorage.setItem(MAIL_KEY, JSON.stringify([...allMails, newMail]));
-  return true;
+  const { error } = await supabase
+    .from('messages')
+    .insert([{
+      sender,
+      recipient,
+      text,
+      timestamp: new Date().toISOString(),
+      read: false
+    }]);
+
+  return !error;
 };
