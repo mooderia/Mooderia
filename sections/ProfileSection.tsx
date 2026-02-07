@@ -45,7 +45,6 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({ user, onUpdate, isDarkM
   return (
     <div className="space-y-8 pb-20">
       <div className={`rounded-[3rem] overflow-hidden shadow-2xl ${isDarkMode ? 'bg-[#111]' : 'bg-white'} border-4 border-black/5`}>
-        {/* Banner */}
         <div className="h-48 md:h-64 w-full relative" style={{ backgroundColor: user.profileColor || '#46178f' }}>
            <div className="absolute inset-0 opacity-10 flex items-center justify-center overflow-hidden">
              <h1 className="text-[20vw] font-black text-white italic whitespace-nowrap uppercase tracking-tighter select-none">{user.title}</h1>
@@ -56,13 +55,12 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({ user, onUpdate, isDarkM
                     onClick={triggerFileSelect}
                     className="w-full h-full rounded-[2rem] overflow-hidden border-4 border-black/5 relative group bg-indigo-500 flex items-center justify-center text-white text-5xl font-black italic cursor-pointer"
                  >
-                    {user.profilePic ? <img src={user.profilePic} className="w-full h-full object-cover" alt="Profile" /> : user.displayName[0]}
+                    {user.profilePic ? <img src={user.profilePic} className="w-full h-full object-cover" alt="Profile" /> : (user.displayName || 'M')[0]}
                     
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                        <Camera size={32} />
                     </div>
                     
-                    {/* Hidden File Input */}
                     <input 
                       type="file" 
                       ref={fileInputRef} 
@@ -78,13 +76,12 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({ user, onUpdate, isDarkM
            </button>
         </div>
 
-        {/* Info */}
         <div className="pt-20 px-8 md:px-12 pb-10 space-y-4">
            <div>
               <h2 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter leading-none mb-2">{user.displayName}</h2>
               <div className="flex items-center gap-3">
                  <span className="bg-indigo-600/10 text-indigo-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-600/20">{user.title}</span>
-                 <p className="text-[10px] font-black opacity-30 uppercase tracking-widest">@{user.username}</p>
+                 <p className="text-[10px] font-black opacity-30 uppercase tracking-widest">ID:{user.citizenCode}</p>
               </div>
            </div>
            <p className="text-base font-bold opacity-60 max-w-2xl leading-relaxed italic">
@@ -92,9 +89,9 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({ user, onUpdate, isDarkM
            </p>
 
            <div className="pt-8 flex gap-12 border-t border-black/5">
-              <div className="text-center md:text-left"><p className="text-3xl font-black italic leading-none">{user.moodStreak}</p><p className="text-[9px] font-black opacity-30 uppercase tracking-widest mt-1">Streak</p></div>
-              <div className="text-center md:text-left"><p className="text-3xl font-black italic leading-none">{user.moodCoins}</p><p className="text-[9px] font-black opacity-30 uppercase tracking-widest mt-1">Coins</p></div>
-              <div className="text-center md:text-left"><p className="text-3xl font-black italic leading-none">{user.moodHistory.length}</p><p className="text-[9px] font-black opacity-30 uppercase tracking-widest mt-1">Moods</p></div>
+              <div className="text-center md:text-left"><p className="text-3xl font-black italic leading-none">{user.moodStreak || 0}</p><p className="text-[9px] font-black opacity-30 uppercase tracking-widest mt-1">Streak</p></div>
+              <div className="text-center md:text-left"><p className="text-3xl font-black italic leading-none">{user.moodCoins || 0}</p><p className="text-[9px] font-black opacity-30 uppercase tracking-widest mt-1">Coins</p></div>
+              <div className="text-center md:text-left"><p className="text-3xl font-black italic leading-none">{(user.moodHistory || []).length}</p><p className="text-[9px] font-black opacity-30 uppercase tracking-widest mt-1">Moods</p></div>
            </div>
         </div>
       </div>

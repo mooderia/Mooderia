@@ -1,3 +1,5 @@
+
+
 export type Mood = 'Wonderful' | 'Excited' | 'Happy' | 'Normal' | 'Tired' | 'Angry' | 'Flaming' | null;
 
 export interface DiaryEntry {
@@ -33,11 +35,11 @@ export interface RoutineItem {
 
 export interface User {
   id?: string;
-  citizenCode: string; // 6-digit unique code
+  citizenCode: string; // 6-digit unique code - This is now the primary handle
+  username?: string; // Unique handle
   displayName: string;
-  username: string;
-  email: string;
-  country: string; // Added Country
+  password?: string; // Stored for manual auth check
+  country: string; 
   profilePic?: string;
   profileColor?: string;
   title?: string;
@@ -50,7 +52,7 @@ export interface User {
   lastMoodDate?: string;
   moodCoins: number;
   
-  // Mood Pet Reworked
+  // Mood Pet
   petName: string;
   petEmoji: string;
   petLevel: number;
@@ -60,8 +62,8 @@ export interface User {
   unlockedBackgrounds: string[]; 
   
   // Social
-  friends: string[]; // List of usernames or IDs
-  friendRequests: string[]; // List of incoming usernames/IDs
+  friends: string[]; // List of citizenCodes
+  friendRequests: string[]; // List of citizenCodes
   following: string[];
   followers: string[];
   likesReceived: number;
@@ -69,8 +71,8 @@ export interface User {
 
 export interface Message {
   id: string;
-  sender: string;
-  recipient: string;
+  sender: string; // citizenCode
+  recipient: string; // citizenCode
   text: string;
   timestamp: number;
   read: boolean;
@@ -83,9 +85,16 @@ export interface Notification {
   text: string;
   timestamp: number;
   read: boolean;
-  fromUser?: string;
+  fromUser?: string; // citizenCode
   postContentSnippet?: string;
-  actionId?: string; // For handling accepts
+  actionId?: string;
 }
 
-export type Section = 'Home' | 'Mood' | 'Zodiac' | 'Psychiatrist' | 'CityHall' | 'Mails' | 'Profile' | 'Settings';
+export type Section = 'Home' | 'Mood' | 'CityHall' | 'Mails' | 'Profile' | 'Settings';
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'model';
+  text: string;
+  timestamp: number;
+}

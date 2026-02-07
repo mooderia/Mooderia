@@ -28,7 +28,7 @@ const HomeSection: React.FC<HomeSectionProps> = ({ user, isDarkMode, language })
         <div className="bg-orange-500 text-white px-6 py-4 rounded-[2rem] shadow-xl flex items-center gap-3 border-b-8 border-orange-700">
           <Flame size={28} className="animate-pulse" />
           <div>
-            <p className="text-2xl font-black leading-none">{user.moodStreak}</p>
+            <p className="text-2xl font-black leading-none">{user.moodStreak || 0}</p>
             <p className="text-[10px] font-black uppercase opacity-60">{t('streak', language)}</p>
           </div>
         </div>
@@ -53,9 +53,9 @@ const HomeSection: React.FC<HomeSectionProps> = ({ user, isDarkMode, language })
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
-          { label: 'Mood Logs', val: user.moodHistory.length, color: 'text-green-500' },
-          { label: 'Tasks Slated', val: user.schedule.length, color: 'text-blue-500' },
-          { label: t('coins', language), val: user.moodCoins, color: 'text-yellow-500' }
+          { label: 'Mood Logs', val: (user.moodHistory || []).length, color: 'text-green-500' },
+          { label: 'Tasks Slated', val: (user.schedule || []).length, color: 'text-blue-500' },
+          { label: t('coins', language), val: user.moodCoins || 0, color: 'text-yellow-500' }
         ].map(stat => (
           <div key={stat.label} className={`p-8 rounded-[3rem] ${isDarkMode ? 'bg-[#111]' : 'bg-white'} border-4 border-black/5 shadow-xl`}>
              <p className={`text-4xl font-black italic ${stat.color}`}>{stat.val}</p>

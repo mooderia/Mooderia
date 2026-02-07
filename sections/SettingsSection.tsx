@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Moon, Sun, Globe, LogOut, ChevronRight, Copy, QrCode, Shield, Check } from 'lucide-react';
+import { Moon, Sun, Globe, LogOut, ChevronRight, Copy, QrCode, Shield, Check, Smartphone, Download } from 'lucide-react';
 import { generateTransferCode } from '../services/supabaseService'; 
 import { User } from '../types';
 import { COUNTRIES } from '../constants';
@@ -29,6 +30,17 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ isDarkMode, onToggleD
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownloadApk = () => {
+    // In a real environment, this would link to the hosted APK file.
+    // Simulating download behavior here.
+    const link = document.createElement('a');
+    link.href = '/mooderia-v6.apk'; // Placeholder path
+    link.download = 'Mooderia_Metropolis.apk';
+    // alert("Downloading Mooderia APK Package...");
+    // For demo purposes, we can just show an alert since no file exists on this text interface
+    alert("Initiating secure download for Android Package (APK)...");
   };
   
   const flagUrl = `https://flagcdn.com/w320/${user.country || 'un'}.png`;
@@ -75,6 +87,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ isDarkMode, onToggleD
                  <div>
                     <p className="text-[8px] font-black uppercase opacity-40 tracking-widest mb-1">Citizen Name</p>
                     <p className="text-xl md:text-2xl font-black italic uppercase leading-none truncate drop-shadow-sm">{user.displayName}</p>
+                    {user.username && <p className="text-[10px] font-black uppercase opacity-50 tracking-widest">@{user.username}</p>}
                  </div>
                  <div className="flex gap-4">
                     <div>
@@ -126,6 +139,24 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ isDarkMode, onToggleD
 
       {/* Settings Grid */}
       <div className={`p-8 rounded-[3rem] ${isDarkMode ? 'bg-[#111]' : 'bg-white'} border-4 border-black/5 shadow-2xl space-y-4`}>
+        
+        {/* APK Download Button */}
+        <button 
+          onClick={handleDownloadApk}
+          className={`w-full flex items-center justify-between p-6 rounded-3xl transition-all border-2 border-transparent ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-green-50 hover:bg-green-100'}`}
+        >
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-2xl ${isDarkMode ? 'bg-green-500 text-white' : 'bg-white text-green-600 shadow-sm'}`}>
+              <Smartphone size={24}/>
+            </div>
+            <div className="text-left">
+               <p className="font-black italic uppercase text-sm">Mobile App</p>
+               <p className="text-[10px] font-black opacity-40 uppercase tracking-widest">Download Android APK</p>
+            </div>
+          </div>
+          <Download size={20} className="opacity-40" />
+        </button>
+
         <button 
           onClick={onToggleDarkMode}
           className={`w-full flex items-center justify-between p-6 rounded-3xl transition-all border-2 border-transparent ${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-50 hover:bg-gray-100'}`}
@@ -168,7 +199,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ isDarkMode, onToggleD
       </div>
 
       <div className="text-center opacity-20 font-black italic tracking-widest text-[10px] py-10">
-        MOODERIA METROPOLIS v8.2.0
+        MOODERIA METROPOLIS v9.0.0 (APK Build)
       </div>
     </div>
   );

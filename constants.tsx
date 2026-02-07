@@ -39,6 +39,21 @@ export const MOOD_SCORES: Record<string, number> = {
   'Flaming': 0
 };
 
+export const ZODIAC_SIGNS = [
+  { name: 'Aries', date: 'Mar 21 - Apr 19', element: 'Fire', trait: 'Courageous', icon: '♈' },
+  { name: 'Taurus', date: 'Apr 20 - May 20', element: 'Earth', trait: 'Reliable', icon: '♉' },
+  { name: 'Gemini', date: 'May 21 - Jun 20', element: 'Air', trait: 'Versatile', icon: '♊' },
+  { name: 'Cancer', date: 'Jun 21 - Jul 22', element: 'Water', trait: 'Intuitive', icon: '♋' },
+  { name: 'Leo', date: 'Jul 23 - Aug 22', element: 'Fire', trait: 'Passionate', icon: '♌' },
+  { name: 'Virgo', date: 'Aug 23 - Sep 22', element: 'Earth', trait: 'Analytical', icon: '♍' },
+  { name: 'Libra', date: 'Sep 23 - Oct 22', element: 'Air', trait: 'Diplomatic', icon: '♎' },
+  { name: 'Scorpio', date: 'Oct 23 - Nov 21', element: 'Water', trait: 'Resourceful', icon: '♏' },
+  { name: 'Sagittarius', date: 'Nov 22 - Dec 21', element: 'Fire', trait: 'Optimistic', icon: '♐' },
+  { name: 'Capricorn', date: 'Dec 22 - Jan 19', element: 'Earth', trait: 'Disciplined', icon: '♑' },
+  { name: 'Aquarius', date: 'Jan 20 - Feb 18', element: 'Air', trait: 'Independent', icon: '♒' },
+  { name: 'Pisces', date: 'Feb 19 - Mar 20', element: 'Water', trait: 'Artistic', icon: '♓' }
+];
+
 export const WISDOM_OF_MOODERIA = [
   "Your light shines brighter than the metropolis neon.",
   "Every small step in Mooderia leads to a giant leap of happiness.",
@@ -62,38 +77,6 @@ export const DAILY_COLORS = [
 
 export const getExpNeeded = (level: number) => Math.floor(100 * Math.pow(1.5, level - 1));
 
-export const ZODIACS = [
-  { name: 'Aries', symbol: '♈', dates: 'Mar 21 - Apr 19', history: 'The fearless ram of the metropolis sky.', description: 'Vibrant energy and pioneering spirit.' },
-  { name: 'Taurus', symbol: '♉', dates: 'Apr 20 - May 20', history: 'The steady foundation of the industrial district.', description: 'Practical, reliable, and grounded.' },
-  { name: 'Gemini', symbol: '♊', dates: 'May 21 - Jun 20', history: 'The twin frequencies of communication.', description: 'Adaptable, curious, and quick-witted.' },
-  { name: 'Cancer', symbol: '♋', dates: 'Jun 21 - Jul 22', history: 'The protective shell of the residential zones.', description: 'Intuitive, sentimental, and nurturing.' },
-  { name: 'Leo', symbol: '♌', dates: 'Jul 23 - Aug 22', history: 'The golden spotlight of the entertainment district.', description: 'Confident, charismatic, and passionate.' },
-  { name: 'Virgo', symbol: '♍', dates: 'Aug 23 - Sep 22', history: 'The meticulous architect of the grid.', description: 'Analytical, hardworking, and kind.' },
-  { name: 'Libra', symbol: '♎', dates: 'Sep 23 - Oct 22', history: 'The balanced scales of the legal district.', description: 'Diplomatic, artistic, and social.' },
-  { name: 'Scorpio', symbol: '♏', dates: 'Oct 23 - Nov 21', history: 'The intense mystery of the underground levels.', description: 'Brave, resourceful, and focused.' },
-  { name: 'Sagittarius', symbol: '♐', dates: 'Nov 22 - Dec 21', history: 'The archer reaching for the highest skyscrapers.', description: 'Generous, idealistic, and adventurous.' },
-  { name: 'Capricorn', symbol: '♑', dates: 'Dec 22 - Jan 19', history: 'The persistent climber of the corporate towers.', description: 'Disciplined, responsible, and ambitious.' },
-  { name: 'Aquarius', symbol: '♒', dates: 'Jan 20 - Feb 18', history: 'The visionary technologist of the neon future.', description: 'Original, independent, and humanitarian.' },
-  { name: 'Pisces', symbol: '♓', dates: 'Feb 19 - Mar 20', history: 'The dream-weaving artist of the harbor district.', description: 'Compassionate, artistic, and intuitive.' }
-];
-
-export const getZodiacFromDate = (m: number, d: number) => {
-  if ((m === 3 && d >= 21) || (m === 4 && d <= 19)) return 'Aries';
-  if ((m === 4 && d >= 20) || (m === 5 && d <= 20)) return 'Taurus';
-  if ((m === 5 && d >= 21) || (m === 6 && d <= 20)) return 'Gemini';
-  if ((m === 6 && d >= 21) || (m === 7 && d <= 22)) return 'Cancer';
-  if ((m === 7 && d >= 23) || (m === 8 && d <= 22)) return 'Leo';
-  if ((m === 8 && d >= 23) || (m === 9 && d <= 22)) return 'Virgo';
-  if ((m === 9 && d >= 23) || (m === 10 && d <= 22)) return 'Libra';
-  if ((m === 10 && d >= 23) || (m === 11 && d <= 21)) return 'Scorpio';
-  if ((m === 11 && d >= 22) || (m === 12 && d <= 21)) return 'Sagittarius';
-  if ((m === 12 && d >= 22) || (m === 1 && d <= 19)) return 'Capricorn';
-  if ((m === 1 && d >= 20) || (m === 2 && d <= 18)) return 'Aquarius';
-  return 'Pisces';
-};
-
-// --- NEW CONSTANTS FOR REWORK ---
-
 export const PET_BACKGROUNDS = [
   { id: 'default', name: 'White Void', price: 0, style: 'bg-white' },
   { id: 'park', name: 'Central Park', price: 5, style: 'bg-gradient-to-b from-blue-300 to-green-300' },
@@ -110,8 +93,6 @@ export const TRANSLATIONS = {
     welcome: "Welcome, Citizen!",
     home: "Home",
     mood: "Mood",
-    zodiac: "Zodiac",
-    psychiatrist: "Dr. Pinel",
     cityHall: "City Hall",
     mails: "Mails",
     profile: "Profile",
@@ -142,7 +123,7 @@ export const TRANSLATIONS = {
     streak: "Day Streak",
     noEntries: "No entries found.",
     taskAlert: "Routine Alert",
-    taskTime: "It's time for:",
+    taskTime: "Oras na para sa:",
     rewardTitle: "Reward Gained!",
     rewardMsg: "You gained 1 Coin and EXP!",
   },
@@ -150,8 +131,6 @@ export const TRANSLATIONS = {
     welcome: "Mabuhay, Mamamayan!",
     home: "Tahanan",
     mood: "Damdamin",
-    zodiac: "Zodiac",
-    psychiatrist: "Dr. Pinel",
     cityHall: "Munisipyo",
     mails: "Sulat",
     profile: "Propayl",

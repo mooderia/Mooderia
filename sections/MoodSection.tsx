@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Mood, DiaryEntry } from '../types';
@@ -36,12 +37,12 @@ const MoodSection: React.FC<MoodSectionProps> = ({ user, onUpdate, isDarkMode, l
 
   // Statistics Data
   const lineData = useMemo(() => {
-    return user.moodHistory.slice(-14).map((entry, i) => ({ name: `Day ${i + 1}`, score: entry.score }));
+    return (user.moodHistory || []).slice(-14).map((entry, i) => ({ name: `Day ${i + 1}`, score: entry.score }));
   }, [user.moodHistory]);
 
   const barData = useMemo(() => {
     const counts: Record<string, number> = { Wonderful: 0, Excited: 0, Happy: 0, Normal: 0, Tired: 0, Angry: 0, Flaming: 0 };
-    user.moodHistory.forEach(e => { if (e.mood) counts[e.mood]++; });
+    (user.moodHistory || []).forEach(e => { if (e.mood) counts[e.mood]++; });
     return Object.entries(counts).map(([name, val]) => ({ name, val }));
   }, [user.moodHistory]);
 
@@ -54,7 +55,7 @@ const MoodSection: React.FC<MoodSectionProps> = ({ user, onUpdate, isDarkMode, l
       mood: diaryMood,
       timestamp: Date.now()
     };
-    onUpdate({ diaryEntries: [newEntry, ...user.diaryEntries] });
+    onUpdate({ diaryEntries: [newEntry, ...(user.diaryEntries || [])] });
     setIsAddingDiary(false);
     setDiaryTitle('');
     setDiaryContent('');
@@ -91,7 +92,6 @@ const MoodSection: React.FC<MoodSectionProps> = ({ user, onUpdate, isDarkMode, l
     setIsConsulting(true);
     setFortuneAnswer('');
     
-    // Non-AI logic based on 25% probability per option
     setTimeout(() => {
         const rand = Math.random();
         let answer = "";
@@ -171,9 +171,9 @@ const MoodSection: React.FC<MoodSectionProps> = ({ user, onUpdate, isDarkMode, l
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {user.diaryEntries.length > 0 ? user.diaryEntries.map(entry => (
+                {(user.diaryEntries || []).length > 0 ? (user.diaryEntries || []).map(entry => (
                   <div key={entry.id} className={`p-6 rounded-[2.5rem] ${isDarkMode ? 'bg-[#111]' : 'bg-white'} border-4 border-black/5 shadow-md group relative`}>
-                    <button onClick={() => onUpdate({ diaryEntries: user.diaryEntries.filter(e => e.id !== entry.id) })} className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
+                    <button onClick={() => onUpdate({ diaryEntries: (user.diaryEntries || []).filter(e => e.id !== entry.id) })} className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16} /></button>
                     <div className="flex items-center gap-2 mb-2">
                        <span className="text-[9px] font-black uppercase opacity-40">{new Date(entry.timestamp).toLocaleDateString()}</span>
                        <span className="bg-indigo-600/10 text-indigo-600 px-2 rounded-lg text-[9px] font-black uppercase">{entry.mood}</span>

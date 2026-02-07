@@ -15,21 +15,18 @@ const MailSection: React.FC<MailSectionProps> = ({ notifications, setNotificatio
   const [selectedMail, setSelectedMail] = useState<Notification | null>(null);
 
   useEffect(() => {
-    // Mark all as read when entering in state
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    // Persist read status in storage to prevent re-alerting on refresh
-    markMessagesAsRead(currentUser.username);
-  }, [currentUser.username, setNotifications]);
+    markMessagesAsRead(currentUser.citizenCode);
+  }, [currentUser.citizenCode, setNotifications]);
 
   const clearAll = () => {
     setNotifications([]);
   };
 
-  const handleFriendAction = async (fromUsername: string, accept: boolean) => {
-    const success = await respondToFriendRequest(currentUser.username, fromUsername, accept);
+  const handleFriendAction = async (fromCitizenCode: string, accept: boolean) => {
+    const success = await respondToFriendRequest(currentUser.citizenCode, fromCitizenCode, accept);
     if (success) {
-      // Remove the notification from the local list
-      setNotifications(prev => prev.filter(n => n.fromUser !== fromUsername || n.type !== 'friend_request'));
+      setNotifications(prev => prev.filter(n => n.fromUser !== fromCitizenCode || n.type !== 'friend_request'));
       setSelectedMail(null);
     }
   };
@@ -101,7 +98,6 @@ const MailSection: React.FC<MailSectionProps> = ({ notifications, setNotificatio
          <p className="text-[10px] font-black uppercase tracking-widest leading-none">All communications are encrypted by Mooderia City Grid.</p>
       </div>
 
-      {/* Expanded Mail Modal */}
       <AnimatePresence>
         {selectedMail && (
             <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
@@ -112,7 +108,7 @@ const MailSection: React.FC<MailSectionProps> = ({ notifications, setNotificatio
                     <button onClick={(e) => { e.stopPropagation(); setSelectedMail(null); }} className="absolute top-8 right-8 p-2 rounded-full bg-black/5 hover:bg-black/10 transition-colors"><X size={24}/></button>
                     
                     <div className="flex items-center gap-6 mb-8 border-b-2 border-black/5 pb-6">
-                        <div className={`w-20 h-20 rounded-[2rem] flex items-center justify-center shadow-lg ${selectedMail.type === 'schedule' ? 'bg-blue-600' : selectedMail.type === 'friend_request' ? 'bg-orange-500' : 'bg-yellow-500'} text-white shrink-0`}>
+                        <div className={`w-20 h-20 rounded-[2rem] flex items-center justify-center shadow-lg ${selectedMail.type === 'schedule' ? 'bg-blue-600' : selectedMail.type === 'friend_request' ? 'bg-orange-500' : selectedMail.type === 'yellow-500'} text-white shrink-0`}>
                             {selectedMail.type === 'schedule' ? <Bell size={40}/> : selectedMail.type === 'friend_request' ? <UserPlus size={40}/> : <Mail size={40}/>}
                         </div>
                         <div>

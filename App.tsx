@@ -1,11 +1,10 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Section, Notification, Mood, Message } from './types';
 import Sidebar from './components/Sidebar';
 import HomeSection from './sections/HomeSection';
 import MoodSection from './sections/MoodSection';
-import ZodiacSection from './sections/ZodiacSection';
-import PsychiatristSection from './sections/PsychiatristSection';
 import CityHallSection from './sections/CityHallSection';
 import MailSection from './sections/MailSection';
 import ProfileSection from './sections/ProfileSection';
@@ -14,8 +13,8 @@ import AuthScreen from './sections/AuthScreen';
 import LoadingScreen from './components/LoadingScreen';
 import MoodCheckIn from './components/MoodCheckIn';
 import { MOOD_SCORES, getExpNeeded, t } from './constants';
-import { syncProfile, fetchUserMessages, sendMessageCloud, getCurrentSessionUser, clearSession, supabase } from './services/supabaseService';
-import { Coins, Sparkles, Trophy, Send, Calendar, Clock, Book, Rocket, Cog } from 'lucide-react';
+import { syncProfile, sendMessageCloud, getCurrentSessionUser, clearSession, subscribeToUser, subscribeToMessages } from './services/supabaseService';
+import { Coins, Sparkles, Trophy, Send, Clock, Book, Cog } from 'lucide-react';
 
 type AnimationType = 'express' | 'schedule' | 'routine' | 'diary' | 'alarm' | null;
 
@@ -30,18 +29,15 @@ const App: React.FC = () => {
   
   const [centralAnimation, setCentralAnimation] = useState<{ type: AnimationType, text?: string } | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     const init = async () => {
-      // 1. Theme and Language
       const savedTheme = localStorage.getItem('mooderia_theme');
       if (savedTheme === 'dark') setIsDarkMode(true);
       const savedLang = localStorage.getItem('mooderia_lang');
       if (savedLang === 'Filipino') setLanguage('Filipino');
       
-      // 2. Cloud Session Check
       try {
         const sessionUser = await getCurrentSessionUser();
         if (sessionUser) {
@@ -53,92 +49,157 @@ const App: React.FC = () => {
 
       setIsLoaded(true);
       setTimeout(() => setIsAppStarting(false), 2000);
+
+      // Request Notification Permission
+      if ("Notification" in window && Notification.permission !== "granted") {
+        Notification.requestPermission();
+      }
     };
     init();
   }, []);
 
-  // Update profile in cloud whenever local state changes significantly
+  // --- SOUND ALERT SYSTEM ---
+  const playAlertSound = () => {
+    // Simple beep sound encoded to avoid external dependency issues
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(500, audioCtx.currentTime); // 500Hz beep
+    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.2); // Play for 0.2s
+  };
+
+  const sendBrowserNotification = (title: string, body: string) => {
+     playAlertSound();
+     if ("Notification" in window && Notification.permission === "granted") {
+         new Notification(title, { body, icon: '/icon.png' });
+     } else {
+         showToast(title, body, <Clock size={20} className="text-blue-500"/>);
+     }
+  };
+
+  // --- SCHEDULER & MOOD ALERT WATCHER ---
   useEffect(() => {
-    if (currentUser) {
-      syncProfile(currentUser);
-    }
-  }, [currentUser]);
+     if (!currentUser) return;
+     
+     const interval = setInterval(() => {
+        const now = new Date();
+        const currentTimeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }); // "14:05"
+        const currentDay = now.getDay(); // 0-6
 
-  // Handle AI responses from PsychiatristSection via Custom Event
-  useEffect(() => {
-    const handleAiResponse = async (e: any) => {
-      const aiMessage: Message = e.detail;
-      await sendMessageCloud(aiMessage.sender, aiMessage.recipient, aiMessage.text);
-      if (currentUser) {
-        const freshMsgs = await fetchUserMessages(currentUser.username);
-        setMessages(freshMsgs);
-      }
-    };
-    window.addEventListener('ai-response', handleAiResponse);
-    return () => window.removeEventListener('ai-response', handleAiResponse);
-  }, [currentUser?.username]);
+        let userUpdates: Partial<User> = {};
+        let needsUpdate = false;
 
-  // Real-time Polling for Cloud Data
-  useEffect(() => {
-    if (!currentUser) return;
+        // 1. Check Schedule
+        const newSchedule = (currentUser.schedule || []).map(item => {
+            // Check if item date matches today and time matches current minute and not already alerted
+            const itemDate = new Date(item.date);
+            const isToday = itemDate.toDateString() === now.toDateString();
+            
+            if (isToday && item.time === currentTimeString && !item.alerted) {
+                sendBrowserNotification("Calendar Alert", `It's time for: ${item.title}`);
+                triggerAnimation('alarm', item.title);
+                return { ...item, alerted: true };
+            }
+            return item;
+        });
 
-    const pollData = async () => {
-      const msgs = await fetchUserMessages(currentUser.username);
-      setMessages(msgs);
-
-      const mailNotifications: Notification[] = msgs.map((m: any) => ({
-        id: m.id,
-        type: 'mail',
-        title: `From @${m.sender}`,
-        text: m.text,
-        timestamp: m.timestamp,
-        read: m.read || false 
-      }));
-
-      // Fetch fresh profile data to sync friends/requests
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('friends, friend_requests')
-        .eq('username', currentUser.username)
-        .single();
-
-      if (profile) {
-        if (JSON.stringify(profile.friends) !== JSON.stringify(currentUser.friends) || 
-            JSON.stringify(profile.friend_requests) !== JSON.stringify(currentUser.friendRequests)) {
-              setCurrentUser(prev => prev ? ({ ...prev, friends: profile.friends, friendRequests: profile.friend_requests }) : null);
+        if (JSON.stringify(newSchedule) !== JSON.stringify(currentUser.schedule)) {
+            userUpdates.schedule = newSchedule;
+            needsUpdate = true;
         }
 
-        const reqNotifs: Notification[] = (profile.friend_requests || []).map((reqUser: string) => ({
-           id: `req-${reqUser}`,
-           type: 'friend_request',
-           title: 'Friend Request',
-           text: `@${reqUser} wants to link frequencies.`,
-           timestamp: Date.now(),
-           fromUser: reqUser,
-           read: false
+        // 2. Check Routines
+        (currentUser.routines || []).forEach(routine => {
+            if (routine.days.includes(currentDay) && routine.startTime === currentTimeString) {
+                // Simple debounce: we rely on the minute changing to stop the alert, 
+                // but real app might need a 'lastAlerted' timestamp in the routine object.
+                // Since this runs every ~60s, it triggers once per minute.
+                sendBrowserNotification("Routine Reminder", `Habit Time: ${routine.title}`);
+                triggerAnimation('routine', routine.title);
+            }
+        });
+
+        // 3. Daily Mood Check (9AM, 1PM, 8PM)
+        const checkInTimes = ["09:00", "13:00", "20:00"];
+        if (checkInTimes.includes(currentTimeString) && currentUser.lastMoodDate !== now.toDateString()) {
+             sendBrowserNotification("Mood Check-In", "How is your frequency vibrating right now?");
+        }
+
+        if (needsUpdate) {
+            handleUpdateUser(userUpdates);
+        }
+     }, 60000); // Run every minute
+
+     return () => clearInterval(interval);
+  }, [currentUser]);
+
+  // --- REALTIME LISTENERS ---
+  useEffect(() => {
+    if (!currentUser?.citizenCode) return;
+
+    // 1. Listen for Profile Changes (Sync from other devices/Friend acceptances)
+    const unsubscribeUser = subscribeToUser(currentUser.citizenCode, (updatedUser) => {
+        setCurrentUser(prev => {
+            if (!prev) return updatedUser;
+            return { ...prev, ...updatedUser };
+        });
+    });
+
+    // 2. Listen for Messages (Mails/Notifications)
+    const unsubscribeMessages = subscribeToMessages(currentUser.citizenCode, (msgs) => {
+        
+        const mailNotifications: Notification[] = msgs.map((m: any) => ({
+            id: m.id,
+            type: 'mail',
+            title: `ID:${m.sender}`,
+            text: m.text,
+            timestamp: m.timestamp,
+            read: m.read || false 
         }));
 
-        setNotifications(prev => {
-            const existingIds = new Set(prev.map(n => n.id));
-            const allFreshNotifs = [...mailNotifications, ...reqNotifs];
-            const newItems = allFreshNotifs.filter(n => !existingIds.has(n.id));
+        const reqNotifs: Notification[] = (currentUser.friendRequests || []).map((reqId: string) => ({
+            id: `req-${reqId}`,
+            type: 'friend_request',
+            title: 'Friend Request',
+            text: `ID:${reqId} wants to link frequencies.`,
+            timestamp: Date.now(),
+            fromUser: reqId,
+            read: false
+         }));
 
-            if (newItems.length > 0) {
-              const unreadNewMails = newItems.filter(n => n.type === 'mail' && !n.read);
-              const unreadNewReqs = newItems.filter(n => n.type === 'friend_request' && !n.read);
-              if (unreadNewMails.length > 0) showToast("New Mail", "Incoming transmission.");
-              if (unreadNewReqs.length > 0) showToast("Alert", "New Citizen Link Request.");
-            }
-            
-            return allFreshNotifs;
-        });
-      }
+         setNotifications(prev => {
+             const existingIds = new Set(prev.map(n => n.id));
+             const allFreshNotifs = [...mailNotifications, ...reqNotifs];
+             const newItems = allFreshNotifs.filter(n => !existingIds.has(n.id));
+
+             if (newItems.length > 0) {
+               const unreadNewMails = newItems.filter(n => n.type === 'mail' && !n.read);
+               const unreadNewReqs = newItems.filter(n => n.type === 'friend_request' && !n.read);
+               
+               if (unreadNewMails.length > 0) {
+                   sendBrowserNotification("New Mail", "Incoming transmission.");
+                   showToast("New Mail", "Incoming transmission.");
+               }
+               if (unreadNewReqs.length > 0) {
+                   sendBrowserNotification("Alert", "New Citizen Link Request.");
+                   showToast("Alert", "New Citizen Link Request.");
+               }
+             }
+             
+             return allFreshNotifs;
+         });
+    });
+
+    return () => {
+        unsubscribeUser();
+        unsubscribeMessages();
     };
-
-    pollData();
-    const interval = setInterval(pollData, 5000);
-    return () => clearInterval(interval);
-  }, [currentUser?.username]);
+  }, [currentUser?.citizenCode, currentUser?.friendRequests?.length]); 
 
   useEffect(() => {
     if (currentUser) {
@@ -149,7 +210,7 @@ const App: React.FC = () => {
         setShowMoodCheckIn(false);
       }
     }
-  }, [currentUser?.username]); 
+  }, [currentUser?.citizenCode]); 
 
   const showToast = (title: string, msg: string, icon?: any) => {
     setActiveToast({ title, msg, icon });
@@ -172,12 +233,15 @@ const App: React.FC = () => {
          nextLevel++;
          showToast("LEVEL UP!", `Pet reached Rank ${nextLevel}`, <Trophy size={20} className="text-yellow-400"/>);
        }
-       return {
+       
+       const updatedUser = {
          ...prev,
          moodCoins: prev.moodCoins + amount,
          petExp: nextExp,
          petLevel: nextLevel
        };
+       syncProfile(updatedUser);
+       return updatedUser;
     });
   }, []);
 
@@ -202,13 +266,20 @@ const App: React.FC = () => {
       } else {
          newStreak = 1;
       }
-      return { ...prev, moodHistory: history, lastMoodDate: today, moodStreak: newStreak };
+      const updated = { ...prev, moodHistory: history, lastMoodDate: today, moodStreak: newStreak };
+      syncProfile(updated);
+      return updated;
     });
     setShowMoodCheckIn(false);
   };
 
   const handleUpdateUser = (updates: Partial<User>) => {
-    setCurrentUser(prev => prev ? { ...prev, ...updates } : null);
+    setCurrentUser(prev => {
+        if (!prev) return null;
+        const updated = { ...prev, ...updates };
+        syncProfile(updated);
+        return updated;
+    });
   };
 
   const handleLogout = async () => {
@@ -220,13 +291,9 @@ const App: React.FC = () => {
 
   const handleSendMail = async (recipient: string, message: string) => {
     if (!currentUser) return;
-    const success = await sendMessageCloud(currentUser.username, recipient, message);
+    const success = await sendMessageCloud(currentUser.citizenCode, recipient, message);
     if (success) {
-      if (recipient !== 'DrPinel') {
-        showToast("Sent!", `Express mail delivered to @${recipient}`);
-      }
-      const freshMsgs = await fetchUserMessages(currentUser.username);
-      setMessages(freshMsgs);
+      showToast("Sent!", `Express mail delivered to ID:${recipient}`);
     }
   };
 
@@ -320,12 +387,10 @@ const App: React.FC = () => {
                 language={language}
               />
               
-              <main className="flex-1 h-full overflow-y-auto relative p-4 md:p-8 no-scrollbar">
+              <main className="flex-1 h-full overflow-y-auto relative p-4 pt-20 md:p-8 no-scrollbar">
                 <AnimatePresence mode="wait">
                   {activeSection === 'Home' && <motion.div key="home" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}}><HomeSection user={currentUser} isDarkMode={isDarkMode} language={language} /></motion.div>}
                   {activeSection === 'Mood' && <motion.div key="mood" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="h-full"><MoodSection user={currentUser} onUpdate={handleUpdateUser} isDarkMode={isDarkMode} language={language} onReward={() => handleGainReward(1, 10)} triggerAnimation={triggerAnimation} /></motion.div>}
-                  {activeSection === 'Zodiac' && <motion.div key="zodiac" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="h-full"><ZodiacSection isDarkMode={isDarkMode} /></motion.div>}
-                  {activeSection === 'Psychiatrist' && <motion.div key="psychiatrist" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="h-full"><PsychiatristSection currentUser={currentUser} isDarkMode={isDarkMode} messages={messages} onSendMessage={(text) => handleSendMail('DrPinel', text)} /></motion.div>}
                   {activeSection === 'CityHall' && <motion.div key="cityhall" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}} className="h-full"><CityHallSection user={currentUser} onUpdate={handleUpdateUser} isDarkMode={isDarkMode} language={language} onReward={() => handleGainReward(2, 20)} triggerAnimation={triggerAnimation} onSendMail={handleSendMail} /></motion.div>}
                   {activeSection === 'Mails' && <motion.div key="mails" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}}><MailSection notifications={notifications} setNotifications={setNotifications} isDarkMode={isDarkMode} currentUser={currentUser} /></motion.div>}
                   {activeSection === 'Profile' && <motion.div key="profile" initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0}}><ProfileSection user={currentUser} onUpdate={handleUpdateUser} isDarkMode={isDarkMode} /></motion.div>}
